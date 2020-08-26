@@ -1,0 +1,28 @@
+{
+  "variants": {
+    "facing=north,standing=false": {
+      "model": "playerrugs:block/player_rug"
+    },
+    "facing=south,standing=false": {
+      "model": "playerrugs:block/player_rug"
+    },
+    "facing=west,standing=false": {
+      "model": "playerrugs:block/player_rug"
+    },
+    "facing=east,standing=false": {
+      "model": "playerrugs:block/player_rug"
+    },
+    "facing=north,standing=true": {
+      "model": "playerrugs:block/player_rug"
+    },
+    "facing=south,standing=true": {
+      "model": "playerrugs:block/player_rug"
+    },
+    "facing=west,standing=true": {
+      "model": "playerrugs:block/player_rug"
+    },
+    "facing=east,standing=true": {
+      "model": "playerrugs:block/player_rug"
+    }
+  }
+}

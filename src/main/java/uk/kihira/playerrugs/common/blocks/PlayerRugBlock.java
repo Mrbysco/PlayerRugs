@@ -1,83 +1,84 @@
 package uk.kihira.playerrugs.common.blocks;
 
-import net.minecraft.block.BlockContainer;
-import net.minecraft.block.SoundType;
-import net.minecraft.block.material.Material;
-import net.minecraft.block.properties.PropertyBool;
-import net.minecraft.block.properties.PropertyDirection;
-import net.minecraft.block.state.BlockStateContainer;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.creativetab.CreativeTabs;
-import net.minecraft.entity.EntityLivingBase;
-import net.minecraft.entity.player.EntityPlayer;
+import com.mojang.authlib.GameProfile;
+import net.minecraft.block.AbstractBlock;
+import net.minecraft.block.Block;
+import net.minecraft.block.BlockRenderType;
+import net.minecraft.block.BlockState;
+import net.minecraft.block.ContainerBlock;
+import net.minecraft.entity.LivingEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.BlockItemUseContext;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTUtil;
+import net.minecraft.state.BooleanProperty;
+import net.minecraft.state.DirectionProperty;
+import net.minecraft.state.Property;
+import net.minecraft.state.StateContainer.Builder;
+import net.minecraft.state.properties.BlockStateProperties;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumBlockRenderType;
-import net.minecraft.util.EnumFacing;
-import net.minecraft.util.math.AxisAlignedBB;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Mirror;
+import net.minecraft.util.Rotation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.RayTraceResult;
-import net.minecraft.world.IBlockAccess;
+import net.minecraft.util.math.shapes.ISelectionContext;
+import net.minecraft.util.math.shapes.VoxelShape;
+import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
-import uk.kihira.playerrugs.PlayerRugs;
 import uk.kihira.playerrugs.common.tileentities.PlayerRugTE;
+import uk.kihira.playerrugs.common.util.ProfileHelper;
 
-public class PlayerRugBlock extends BlockContainer {
+import javax.annotation.Nullable;
 
-    public static final PropertyDirection FACING = PropertyDirection.create("facing", EnumFacing.Plane.HORIZONTAL);
-    public static final PropertyBool STANDING = PropertyBool.create("standing");
+public class PlayerRugBlock extends ContainerBlock {
 
-    private static final AxisAlignedBB STANDING_EAST = new AxisAlignedBB(0, 0, 4f/16f, 1f/16f, 1, 12f/16f);
-    private static final AxisAlignedBB STANDING_WEST = new AxisAlignedBB(15f/16f, 0, 4f/16f, 1f, 1, 12f/16f);
-    private static final AxisAlignedBB STANDING_NORTH = new AxisAlignedBB(4f/16f, 0, 15f/16f, 12f/16f, 1, 1f);
-    private static final AxisAlignedBB STANDING_SOUTH = new AxisAlignedBB(4f/16f, 0, 0, 12f/16f, 1, 1f/16f);
-    private static final AxisAlignedBB FACING_EAST_WEST = new AxisAlignedBB(0, 0, 0.2f, 1, 1f/16f, 0.8f);
-    private static final AxisAlignedBB FACING_NORTH_SOUTH = new AxisAlignedBB(0.2f, 0, 0, 0.8f, 1f/16f, 1);
+    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final BooleanProperty STANDING = BooleanProperty.create("standing");
 
-    public PlayerRugBlock() {
-        super(Material.CLOTH);
-        setUnlocalizedName("playerRug");
-        setDefaultState(this.blockState.getBaseState().withProperty(FACING, EnumFacing.NORTH).withProperty(STANDING, false));
-        setCreativeTab(CreativeTabs.DECORATIONS);
-        setSoundType(SoundType.CLOTH);
+    private static final VoxelShape STANDING_EAST = Block.makeCuboidShape(0, 0, 4, 1, 16, 12);
+    private static final VoxelShape STANDING_WEST = Block.makeCuboidShape(15, 0, 4, 16, 16, 12);
+    private static final VoxelShape STANDING_NORTH = Block.makeCuboidShape(4, 0, 15, 12, 16, 16);
+    private static final VoxelShape STANDING_SOUTH = Block.makeCuboidShape(4, 0, 0, 12, 16, 1);
+    private static final VoxelShape FACING_NORTH_SOUTH = Block.makeCuboidShape(4, 0, 0, 12, 1, 16);
+    private static final VoxelShape FACING_EAST_WEST = Block.makeCuboidShape(16, 0, 12, 1, 1, 4);
+
+    public PlayerRugBlock(AbstractBlock.Properties builder) {
+        super(builder.notSolid().setOpaque(PlayerRugBlock::isntSolid));
+        setDefaultState(this.getStateContainer().getBaseState().with(FACING, Direction.NORTH).with(STANDING, false));
     }
 
     @Override
-    public EnumBlockRenderType getRenderType(IBlockState state) {
-        return EnumBlockRenderType.MODEL;
+    public BlockRenderType getRenderType(BlockState state) {
+        return BlockRenderType.MODEL;
     }
 
-    @Override
-    public boolean isOpaqueCube(IBlockState state) {
+    private static boolean isntSolid(BlockState state, IBlockReader reader, BlockPos pos) {
         return false;
     }
 
     @Override
-    public boolean isFullCube(IBlockState state) {
-        return false;
-    }
-
-    @Override
-    public void onBlockPlacedBy(World world, BlockPos pos, IBlockState state, EntityLivingBase entity, ItemStack stack) {
-        // State is already set in onBlockPlaced so we don't need to change the state here
-        if (stack.hasTagCompound()) {
-            ((PlayerRugTE) world.getTileEntity(pos)).setPlayerProfile(NBTUtil.readGameProfileFromNBT(stack.getSubCompound("PlayerProfile", false)));
+    public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
+        if (stack.hasTag() && stack.getTag() != null && world.getTileEntity(pos) != null) {
+            PlayerRugTE rugTE = (PlayerRugTE)world.getTileEntity(pos);
+            GameProfile gameProfile = NBTUtil.readGameProfile(stack.getChildTag("PlayerProfile"));
+            rugTE.setPlayerProfile(gameProfile);
+            rugTE.markDirty();
         }
     }
 
     @Override
-    public void harvestBlock(World worldIn, EntityPlayer player, BlockPos pos, IBlockState state, TileEntity te, ItemStack stack) {
+    public void harvestBlock(World worldIn, PlayerEntity player, BlockPos pos, BlockState state, TileEntity te, ItemStack stack) {
         if (te instanceof PlayerRugTE) {
-            spawnAsEntity(worldIn, pos, PlayerRugs.INSTANCE.getPlayerRugStack(((PlayerRugTE) te).getPlayerProfile()));
+            spawnAsEntity(worldIn, pos, ProfileHelper.getPlayerRugStack(((PlayerRugTE) te).getPlayerProfile()));
         }
         else super.harvestBlock(worldIn, player, pos, state, te, stack);
     }
 
     @Override
-    public AxisAlignedBB getBoundingBox(IBlockState state, IBlockAccess source, BlockPos pos) {
-        if (state.getValue(STANDING)) {
-            switch (state.getValue(FACING)) {
+    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+        if (state.get(STANDING)) {
+            switch (state.get(FACING)) {
                 case NORTH:
                     return STANDING_NORTH;
                 case SOUTH:
@@ -88,99 +89,41 @@ public class PlayerRugBlock extends BlockContainer {
                     return STANDING_EAST;
             }
         }
-        else {
-            return state.getValue(FACING).getHorizontalIndex() % 2 != 0 ? FACING_EAST_WEST : FACING_NORTH_SOUTH;
+        return state.get(FACING).getHorizontalIndex() % 2 != 0 ? FACING_EAST_WEST : FACING_NORTH_SOUTH;
+    }
+
+    @Override
+    public ItemStack getPickBlock(BlockState state, RayTraceResult target, IBlockReader world, BlockPos pos, PlayerEntity player) {
+        TileEntity te = world.getTileEntity(pos);
+        if(te != null) {
+            return ProfileHelper.getPlayerRugStack(((PlayerRugTE) world.getTileEntity(pos)).getPlayerProfile());
+        } else {
+            return super.getPickBlock(state, target, world, pos, player);
         }
-        return super.getBoundingBox(state, source, pos);
+    }
+
+    @Nullable
+    @Override
+    public BlockState getStateForPlacement(BlockItemUseContext context) {
+        return (BlockState)this.getDefaultState().with(FACING, context.getPlacementHorizontalFacing().getOpposite()).with(STANDING, context.getFace().getAxis().isHorizontal());
+    }
+
+    public BlockState rotate(BlockState state, Rotation rot) {
+        return state.with(FACING, rot.rotate(state.get(FACING)));
+    }
+
+    public BlockState mirror(BlockState state, Mirror mirrorIn) {
+        return state.rotate(mirrorIn.toRotation(state.get(FACING)));
     }
 
     @Override
-    public AxisAlignedBB getSelectedBoundingBox(IBlockState state, World world, BlockPos pos) {
-        float xLength = 0f;
-        float zLength = 0f;
-        float xOffset = 0f;
-        float zOffset = 0f;
-        float yOffset = -7.5f/16f;
-        float yLength = 1f;
-        if (state.getValue(STANDING)) {
-            yLength = 24f;
-            yOffset = -12f/16f;
-        }
-        switch (state.getValue(FACING).getHorizontalIndex() + (state.getValue(STANDING) ? 4 : 0)){
-            case 0:
-                xLength = 8f;
-                zLength = 24f;
-                zOffset -= 5f/16f;
-                break;
-            case 1:
-                xLength = 24f;
-                zLength = 8f;
-                xOffset += 5f/16f;
-                break;
-            case 2:
-                xLength = 8f;
-                zLength = 24f;
-                zOffset += 5f/16f;
-                break;
-            case 3:
-                xLength = 24f;
-                zLength = 8f;
-                xOffset -= 5f/16f;
-                break;
-            case 4:
-                xLength = 8f;
-                zLength = 1f;
-                zOffset -= 7.5f/16f;
-                break;
-            case 5:
-                xLength = 1f;
-                zLength = 8f;
-                xOffset += 7.5f/16f;
-                break;
-            case 6:
-                xLength = 8f;
-                zLength = 1f;
-                zOffset += 7.5f/16f;
-                break;
-            case 7:
-                xLength = 1f;
-                zLength = 8f;
-                xOffset -= 7.5f/16f;
-                break;
-        }
-        zOffset += pos.getZ()+0.5f;
-        xOffset += pos.getX()+0.5f;
-        yOffset += pos.getY()+0.5f;
-        return new AxisAlignedBB(xOffset-(xLength/2f)/16f, yOffset-(yLength/2f)/16f, zOffset-(zLength/2f)/16f, xOffset+(xLength/2f)/16f, yOffset+(yLength/2f)/16f, zOffset+(zLength/2f)/16f);
+    protected void fillStateContainer(Builder<Block, BlockState> builder) {
+        builder.add(new Property[]{FACING, STANDING});
     }
 
+    @Nullable
     @Override
-    public ItemStack getPickBlock(IBlockState state, RayTraceResult target, World world, BlockPos pos, EntityPlayer player) {
-        return PlayerRugs.INSTANCE.getPlayerRugStack(((PlayerRugTE) world.getTileEntity(pos)).getPlayerProfile());
-    }
-
-    @Override
-    public IBlockState onBlockPlaced(World world, BlockPos pos, EnumFacing facing, float hitX, float hitY, float hitZ, int meta, EntityLivingBase placer) {
-        return getDefaultState().withProperty(FACING, placer.getHorizontalFacing().getOpposite()).withProperty(STANDING, facing.getAxis() != EnumFacing.Axis.Y);
-    }
-
-    @Override
-    public IBlockState getStateFromMeta(int meta) {
-        return getDefaultState().withProperty(FACING, EnumFacing.getHorizontal(meta % 4)).withProperty(STANDING, meta >= 4);
-    }
-
-    @Override
-    public int getMetaFromState(IBlockState state) {
-        return state.getValue(FACING).getHorizontalIndex() + (state.getValue(STANDING) ? 4 : 0);
-    }
-
-    @Override
-    protected BlockStateContainer createBlockState() {
-        return new BlockStateContainer(this, FACING, STANDING);
-    }
-
-    @Override
-    public TileEntity createNewTileEntity(World world, int p_149915_2_) {
+    public TileEntity createNewTileEntity(IBlockReader iBlockReader) {
         return new PlayerRugTE();
     }
 }

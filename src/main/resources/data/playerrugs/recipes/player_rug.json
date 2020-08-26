@@ -1,0 +1,19 @@
+{
+  "result": {
+    "item": "playerrugs:player_rug"
+  },
+  "pattern": [
+    " P ",
+    "LLL",
+    "LLL"
+  ],
+  "type": "minecraft:crafting_shaped",
+  "key": {
+    "P": {
+      "item": "minecraft:player_head"
+    },
+    "L": {
+      "tag": "forge:leather"
+    }
+  }
+}

@@ -1,34 +1,34 @@
 package uk.kihira.playerrugs.common;
 
-import net.minecraft.command.CommandBase;
-import net.minecraft.command.CommandException;
-import net.minecraft.command.ICommandSender;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.inventory.EntityEquipmentSlot;
+import com.mojang.brigadier.CommandDispatcher;
+import com.mojang.brigadier.arguments.StringArgumentType;
+import com.mojang.brigadier.builder.LiteralArgumentBuilder;
+import com.mojang.brigadier.context.CommandContext;
+import net.minecraft.command.CommandSource;
+import net.minecraft.command.Commands;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
-import net.minecraft.server.MinecraftServer;
-import uk.kihira.playerrugs.PlayerRugs;
+import uk.kihira.playerrugs.common.util.ProfileHelper;
 
-public class PlayerRugCommand extends CommandBase {
-    @Override
-    public String getCommandName() {
-        return "playerrug";
+public class PlayerRugCommand {
+    public static void initializeCommands (CommandDispatcher<CommandSource> dispatcher) {
+        final LiteralArgumentBuilder<CommandSource> root = Commands.literal("playerrug");
+        root.requires((p_198721_0_) -> p_198721_0_.hasPermissionLevel(3))
+                .then(Commands.argument("name", StringArgumentType.word()).executes(PlayerRugCommand::giveRug));
+        dispatcher.register(root);
     }
 
-    @Override
-    public String getCommandUsage(ICommandSender sender) {
-        return null;
-    }
+    private static int giveRug(CommandContext<CommandSource> ctx) {
+        final String username = StringArgumentType.getString(ctx, "name");
 
-    @Override
-    public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
-        EntityPlayer player = (EntityPlayer) sender;
-        ItemStack itemStack = PlayerRugs.INSTANCE.getPlayerRugStack(args.length == 1 ? server.getPlayerProfileCache().getGameProfileForUsername(args[0]) : player.getGameProfile());
-        player.setItemStackToSlot(EntityEquipmentSlot.MAINHAND, itemStack);
-    }
+        Entity sender = ctx.getSource().getEntity();
+        if(sender instanceof ServerPlayerEntity) {
+            ServerPlayerEntity player = (ServerPlayerEntity)ctx.getSource().getEntity();
+            ItemStack itemStack = ProfileHelper.getPlayerRugStack(!username.isEmpty() && player.getServer() != null ? player.getServer().getPlayerProfileCache().getGameProfileForUsername(username) : player.getGameProfile());
+            player.addItemStackToInventory(itemStack);
+        }
 
-    @Override
-    public int getRequiredPermissionLevel() {
-        return 3;
+        return 0;
     }
 }

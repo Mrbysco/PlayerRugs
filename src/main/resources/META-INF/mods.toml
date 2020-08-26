@@ -1,0 +1,14 @@
+modLoader="javafml"
+loaderVersion="[31,)"
+#issueTrackerURL=""
+license="MIT"
+
+[[mods]]
+modId="playerrugs"
+version="${file.jarVersion}"
+displayName="Player Rugs"
+displayURL="https://www.curseforge.com/minecraft/mc-mods/player-rugs"
+authors="Kihira, Mrbysco"
+description='''
+Everyone in #kihira on esper.net
+'''
