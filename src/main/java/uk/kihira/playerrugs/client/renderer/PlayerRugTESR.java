@@ -73,7 +73,7 @@ public class PlayerRugTESR extends TileEntityRenderer<PlayerRugTE> {
                 default:
                     matrix.rotate(Vector3f.YP.rotationDegrees(standing ? 90 : 270));
             }
-            matrix.translate(0, standing ? 0 : 0.25, -0.25);
+            matrix.translate(0, standing ? 0.2 : 0.25, -0.25);
             matrix.rotate(Vector3f.XN.rotationDegrees(standing ? -90 : 0));
         }
         matrix.scale(-1.0F, -1.0F, 1.0F);
@@ -169,7 +169,7 @@ public class PlayerRugTESR extends TileEntityRenderer<PlayerRugTE> {
             Minecraft minecraft = Minecraft.getInstance();
             Map<Type, MinecraftProfileTexture> map = minecraft.getSkinManager().loadSkinFromCache(gameProfileIn);
             if (map.containsKey(Type.SKIN)) {
-                return RenderType.getEntityTranslucent(minecraft.getSkinManager().loadSkin(map.get(Type.SKIN), Type.SKIN));
+                return RenderType.getEntityTranslucentCull(minecraft.getSkinManager().loadSkin(map.get(Type.SKIN), Type.SKIN));
             } else {
                 return RenderType.getEntityCutoutNoCull(DefaultPlayerSkin.getDefaultSkin(PlayerEntity.getUUID(gameProfileIn)));
             }

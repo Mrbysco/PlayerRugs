@@ -22,6 +22,7 @@ eclipse
 run
 classes
 *.bak
+*.bbmodel
 
 # Ignore Gradle GUI config
 gradle-app.setting

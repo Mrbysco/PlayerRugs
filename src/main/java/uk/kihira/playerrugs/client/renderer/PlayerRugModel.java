@@ -40,39 +40,69 @@ public class PlayerRugModel<T extends LivingEntity> extends EntityModel<T> {
 		Torso.setRotationPoint(0.0F, 0.0F, 1.0F);
 		bone.addChild(Torso);
 		setRotationAngle(Torso, 1.5708F, 0.0F, 0.0F);
-		Torso.setTextureOffset(22, 19).addBox(-4.0F, -7.0F, 0.0F, 8.0F, 12.0F, 1.0F, 0.0F, false);
+		Torso.setTextureOffset(24, 20).addBox(-4.0F, -7.0F, 1.0F, 8.0F, 12.0F, 0.0F, 0.0F, false);
+		Torso.setTextureOffset(20, 20).addBox(-4.0F, -7.0F, 0.0F, 8.0F, 12.0F, 0.0F, 0.0F, false);
+		Torso.setTextureOffset(27, 19).addBox(4.0F, -7.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
+		Torso.setTextureOffset(19, 19).addBox(-4.0F, -7.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
+		Torso.setTextureOffset(19, 19).addBox(-4.0F, -7.0F, 0.0F, 8.0F, 0.0F, 1.0F, 0.0F, false);
 
 		LeftArm = new ModelRenderer(this);
-		LeftArm.setRotationPoint(5.0F, 0.0F, 1.0F);
-		bone.addChild(LeftArm);
-		setRotationAngle(LeftArm, 1.5708F, 1.5708F, 0.0F);
-		if(slim) {
-			LeftArm.setTextureOffset(35, 51).addBox(4.0F, -1.0F, 0.0F, 3.0F, 12.0F, 1.0F, 0.0F, false);
-		} else {
-			LeftArm.setTextureOffset(35, 51).addBox(3.0F, -1.0F, 0.0F, 4.0F, 12.0F, 1.0F, 0.0F, false);
-		}
-
 		RightArm = new ModelRenderer(this);
-		RightArm.setRotationPoint(-5.0F, 0.0F, 1.0F);
-		bone.addChild(RightArm);
-		setRotationAngle(RightArm, 1.5708F, -1.5708F, 0.0F);
 		if(slim) {
-			RightArm.setTextureOffset(43, 19).addBox(-7.0F, -1.0F, 0.0F, 3.0F, 12.0F, 1.0F, 0.0F, true);
-		} else {
-			RightArm.setTextureOffset(43, 19).addBox(-7.0F, -1.0F, 0.0F, 4.0F, 12.0F, 1.0F, 0.0F, true);
-		}
+			LeftArm.setRotationPoint(5.0F, 0.0F, 1.0F);
+			bone.addChild(LeftArm);
+			setRotationAngle(LeftArm, 1.5708F, 1.5708F, 0.0F);
+			LeftArm.setTextureOffset(40, 52).addBox(4.0F, -1.0F, 1.0F, 3.0F, 12.0F, 0.0F, 0.0F, false);
+			LeftArm.setTextureOffset(35, 48).addBox(4.0F, 11.0F, 0.0F, 3.0F, 0.0F, 1.0F, 0.0F, false);
+			LeftArm.setTextureOffset(36, 52).addBox(4.0F, -1.0F, 0.0F, 3.0F, 12.0F, 0.0F, 0.0F, false);
+			LeftArm.setTextureOffset(41, 51).addBox(7.0F, -1.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
+			LeftArm.setTextureOffset(35, 51).addBox(4.0F, -1.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
 
-		LeftLeg = new ModelRenderer(this);
-		LeftLeg.setRotationPoint(1.9F, 0.0F, 1.0F);
-		bone.addChild(LeftLeg);
-		setRotationAngle(LeftLeg, 1.5708F, 0.0F, 0.0F);
-		LeftLeg.setTextureOffset(22, 51).addBox(-5.9F, 5.0F, 0.0F, 4.0F, 12.0F, 1.0F, 0.0F, true);
+			RightArm.setRotationPoint(-5.0F, 0.0F, 1.0F);
+			bone.addChild(RightArm);
+			setRotationAngle(RightArm, 1.5708F, -1.5708F, 0.0F);
+			RightArm.setTextureOffset(48, 20).addBox(-7.0F, -1.0F, 1.0F, 3.0F, 12.0F, 0.0F, 0.0F, false);
+			RightArm.setTextureOffset(43, 16).addBox(-7.0F, 11.0F, 0.0F, 3.0F, 0.0F, 1.0F, 0.0F, false);
+			RightArm.setTextureOffset(48, 19).addBox(-7.0F, -1.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
+			RightArm.setTextureOffset(42, 19).addBox(-4.0F, -1.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, true);
+			RightArm.setTextureOffset(44, 20).addBox(-7.0F, -1.0F, 0.0F, 3.0F, 12.0F, 0.0F, 0.0F, false);
+		} else {
+			LeftArm.setRotationPoint(5.0F, 0.0F, 1.0F);
+			bone.addChild(LeftArm);
+			setRotationAngle(LeftArm, 1.5708F, 1.5708F, 0.0F);
+			LeftArm.setTextureOffset(40, 52).addBox(3.0F, -1.0F, 1.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
+			LeftArm.setTextureOffset(35, 48).addBox(3.0F, 11.0F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, false);
+			LeftArm.setTextureOffset(36, 52).addBox(3.0F, -1.0F, 0.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
+			LeftArm.setTextureOffset(41, 51).addBox(7.0F, -1.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
+			LeftArm.setTextureOffset(35, 51).addBox(3.0F, -1.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
+
+			RightArm.setRotationPoint(-5.0F, 0.0F, 1.0F);
+			bone.addChild(RightArm);
+			setRotationAngle(RightArm, 1.5708F, -1.5708F, 0.0F);
+			RightArm.setTextureOffset(48, 20).addBox(-7.0F, -1.0F, 1.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
+			RightArm.setTextureOffset(43, 16).addBox(-7.0F, 11.0F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, false);
+			RightArm.setTextureOffset(48, 19).addBox(-7.0F, -1.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
+			RightArm.setTextureOffset(42, 19).addBox(-3.0F, -1.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, true);
+			RightArm.setTextureOffset(44, 20).addBox(-7.0F, -1.0F, 0.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
+		}
 
 		RightLeg = new ModelRenderer(this);
-		RightLeg.setRotationPoint(-1.9F, 0.0F, 1.0F);
+		RightLeg.setRotationPoint(1.9F, 0.0F, 1.0F);
 		bone.addChild(RightLeg);
 		setRotationAngle(RightLeg, 1.5708F, 0.0F, 0.0F);
-		RightLeg.setTextureOffset(6, 19).addBox(1.9F, 5.0F, 0.0F, 4.0F, 12.0F, 1.0F, 0.0F, true);
+		RightLeg.setTextureOffset(8, 20).addBox(-5.9F, 5.0F, 1.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
+		RightLeg.setTextureOffset(3, 16).addBox(-5.9F, 17.0F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, true);
+		RightLeg.setTextureOffset(4, 20).addBox(-5.9F, 5.0F, 0.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
+		RightLeg.setTextureOffset(12, 19).addBox(-5.9F, 5.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, true);
+
+		LeftLeg = new ModelRenderer(this);
+		LeftLeg.setRotationPoint(-1.9F, 0.0F, 1.0F);
+		bone.addChild(LeftLeg);
+		setRotationAngle(LeftLeg, 1.5708F, 0.0F, 0.0F);
+		LeftLeg.setTextureOffset(24, 52).addBox(1.9F, 5.0F, 1.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
+		LeftLeg.setTextureOffset(19, 48).addBox(1.9F, 17.0F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, true);
+		LeftLeg.setTextureOffset(28, 51).addBox(5.9F, 5.0F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
+		LeftLeg.setTextureOffset(20, 52).addBox(1.9F, 5.0F, 0.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
 	}
 
 	@Override
