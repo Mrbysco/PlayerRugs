@@ -29,7 +29,12 @@ public class PlayerRugTESR extends TileEntityRenderer<PlayerRugTE> {
     public static final PlayerRugModel model = new PlayerRugModel(false);
     public static final PlayerRugModel slimModel = new PlayerRugModel(true);
     public static final StandingPlayerRugModel standingModel = new StandingPlayerRugModel(false);
-    public static final StandingPlayerRugModel standingslimModel = new StandingPlayerRugModel(true);
+    public static final StandingPlayerRugModel standingSlimModel = new StandingPlayerRugModel(true);
+
+    public static final PlayerRugArmorModel armorModel = new PlayerRugArmorModel(false);
+    public static final PlayerRugArmorModel slimArmorModel = new PlayerRugArmorModel(true);
+    public static final StandingPlayerRugArmorModel standingArmorModel = new StandingPlayerRugArmorModel(false);
+    public static final StandingPlayerRugArmorModel standingSlimArmorModel = new StandingPlayerRugArmorModel(true);
 
     public static final ResourceLocation defaultTexture = DefaultPlayerSkin.getDefaultSkinLegacy();
 
@@ -39,22 +44,20 @@ public class PlayerRugTESR extends TileEntityRenderer<PlayerRugTE> {
 
     @Override
     public void render(PlayerRugTE te, float v, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
-        BlockState blockstate = te.getBlockState();
-        boolean flag = blockstate.getBlock() instanceof PlayerRugBlock;
-        Direction direction = flag ? blockstate.get(PlayerRugBlock.FACING) : Direction.UP;
-        boolean standing = flag ? blockstate.get(PlayerRugBlock.STANDING) : false;
-        GameProfile profile = te.getPlayerProfile();
+        final BlockState blockstate = te.getBlockState();
+        final boolean flag = blockstate.getBlock() instanceof PlayerRugBlock;
+        final Direction direction = flag ? blockstate.get(PlayerRugBlock.FACING) : Direction.UP;
+        final boolean standing = flag ? blockstate.get(PlayerRugBlock.STANDING) : false;
+        final GameProfile profile = te.getPlayerProfile();
 
         render(direction, profile, matrixStackIn, bufferIn, combinedLightIn, standing);
     }
 
     public static void render(@Nullable Direction direction, @Nullable GameProfile profile, MatrixStack matrix, IRenderTypeBuffer typeBuffer, int combinedLight, boolean standing) {
-        EntityModel rugModel = standing ? standingModel : model;
+        final boolean isSlim = profile != null && (profile.getId().hashCode() & 1) == 1;
 
-        boolean isSlim = profile != null && (profile.getId().hashCode() & 1) == 1;
-        if(isSlim && rugModel != slimModel) {
-            rugModel = standing ? standingslimModel : slimModel;
-        }
+        final EntityModel rugModel = isSlim ? (standing ? standingSlimModel : slimModel) : standing ? standingModel : model;
+        final EntityModel rugArmorModel = isSlim ? (standing ? standingSlimArmorModel : slimArmorModel) : standing ? standingArmorModel : armorModel;
 
         // Render head
         matrix.translate(0.5D, 0.25D, 0.5D);
@@ -79,21 +82,21 @@ public class PlayerRugTESR extends TileEntityRenderer<PlayerRugTE> {
         matrix.scale(-1.0F, -1.0F, 1.0F);
         matrix.translate(0.0D, standing ? -1.25D : -1.0, 0.0D);
 
-        IVertexBuilder ivertexbuilder = typeBuffer.getBuffer(getRenderType(profile));
+        final IVertexBuilder ivertexbuilder = typeBuffer.getBuffer(getRenderType(profile));
         rugModel.render(matrix, ivertexbuilder, combinedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+
+        matrix.scale(1.125F, standing ? 1.3125F : 1.25F, 1.125F);
+        matrix.translate(0.0D, standing ? -0.3515625D : -0.296875D, 0.0D);
+
+        rugArmorModel.render(matrix, ivertexbuilder, combinedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+
         matrix.pop();
     }
 
     public static void renderItem(TransformType type, @Nullable Direction direction, @Nullable GameProfile profile, MatrixStack matrix, IRenderTypeBuffer typeBuffer, int combinedLight) {
-        EntityModel rugModel = model;
-
-        boolean isSlim;
-        if(profile != null && profile.getId() != null) {
-            isSlim = (profile.getId().hashCode() & 1) == 1;
-            if(isSlim && rugModel != slimModel) {
-                rugModel = slimModel;
-            }
-        }
+        final boolean isSlim = profile != null && (profile.getId().hashCode() & 1) == 1;
+        final EntityModel rugModel = isSlim ? slimModel : model;
+        final EntityModel rugArmorModel = isSlim ? slimArmorModel : armorModel;
 
         // Render head
         matrix.translate(0.5D, 0.25D, 0.5D);
@@ -159,8 +162,14 @@ public class PlayerRugTESR extends TileEntityRenderer<PlayerRugTE> {
         matrix.scale(-1.0F, -1.0F, 1.0F);
         matrix.translate(0.0D, -1.25D, 0.0D);
 
-        IVertexBuilder ivertexbuilder = typeBuffer.getBuffer(getRenderType(profile));
+        final IVertexBuilder ivertexbuilder = typeBuffer.getBuffer(getRenderType(profile));
         rugModel.render(matrix, ivertexbuilder, combinedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+
+        matrix.scale(1.125F, 1.25F, 1.125F);
+        matrix.translate(0.0D, -0.296875D, 0.0D);
+
+        rugArmorModel.render(matrix, ivertexbuilder, combinedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+
         matrix.pop();
     }
 

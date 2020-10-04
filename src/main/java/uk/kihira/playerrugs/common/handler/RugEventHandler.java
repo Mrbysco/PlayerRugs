@@ -6,13 +6,14 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.IInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
-import net.minecraft.item.SkullItem;
 import net.minecraft.util.DamageSource;
 import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AnvilRepairEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.ItemCraftedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
+import uk.kihira.playerrugs.PlayerRugs;
 import uk.kihira.playerrugs.common.blocks.PlayerRugBlock;
+import uk.kihira.playerrugs.common.config.RugConfig;
 import uk.kihira.playerrugs.common.items.PlayerRugItem;
 import uk.kihira.playerrugs.common.util.ProfileHelper;
 
@@ -29,7 +30,7 @@ public class RugEventHandler {
     @SubscribeEvent
     public void onAnvilRepair(AnvilRepairEvent event) {
         ItemStack stack = event.getItemResult();
-        if (Block.getBlockFromItem(stack.getItem()) instanceof PlayerRugBlock && stack.hasDisplayName() && !event.getPlayer().world.isRemote) {
+        if (RugConfig.SERVER.easyCrafting.get() && Block.getBlockFromItem(stack.getItem()) instanceof PlayerRugBlock && stack.hasDisplayName() && !event.getPlayer().world.isRemote) {
             String stackName = stack.getDisplayName().getUnformattedComponentText();
             PlayerEntity player = event.getPlayer();
             if(!stackName.contains(" ") && player.getServer() != null) {
@@ -44,7 +45,7 @@ public class RugEventHandler {
         ItemStack skullStack = ItemStack.EMPTY;
         for(int i = 0; i < inventory.getSizeInventory(); i++) {
             ItemStack foundStack = inventory.getStackInSlot(i);
-            if(!foundStack.isEmpty() && foundStack.getItem() instanceof SkullItem) {
+            if(!foundStack.isEmpty() && foundStack.getItem() == Items.PLAYER_HEAD) {
                 skullStack = foundStack;
             }
         }

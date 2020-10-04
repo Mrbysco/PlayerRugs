@@ -60,10 +60,13 @@ public class PlayerRugBlock extends ContainerBlock {
     @Override
     public void onBlockPlacedBy(World world, BlockPos pos, BlockState state, LivingEntity entity, ItemStack stack) {
         if (stack.hasTag() && stack.getTag() != null && world.getTileEntity(pos) != null) {
-            PlayerRugTE rugTE = (PlayerRugTE)world.getTileEntity(pos);
-            GameProfile gameProfile = NBTUtil.readGameProfile(stack.getChildTag("PlayerProfile"));
-            rugTE.setPlayerProfile(gameProfile);
-            rugTE.markDirty();
+            TileEntity tile = world.getTileEntity(pos);
+            if(tile instanceof PlayerRugTE) {
+                PlayerRugTE rugTE = (PlayerRugTE)tile;
+                GameProfile gameProfile = NBTUtil.readGameProfile(stack.getChildTag("PlayerProfile"));
+                rugTE.setPlayerProfile(gameProfile);
+                rugTE.markDirty();
+            }
         }
     }
 

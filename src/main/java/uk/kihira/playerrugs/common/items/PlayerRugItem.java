@@ -25,8 +25,7 @@ public class PlayerRugItem extends BlockItem {
     public void addInformation(ItemStack stack, @Nullable World worldIn, List<ITextComponent> tooltip, ITooltipFlag flagIn) {
         super.addInformation(stack, worldIn, tooltip, flagIn);
         if (stack.hasTag() && stack.getTag() != null) {
-            GameProfile profile = NBTUtil.readGameProfile(stack.getTag().getCompound("PlayerProfile"));
-
+            final GameProfile profile = NBTUtil.readGameProfile(stack.getTag().getCompound("PlayerProfile"));
             tooltip.add(new StringTextComponent("Player: " + (profile != null ? profile.getName() : "None")));
         }
     }
