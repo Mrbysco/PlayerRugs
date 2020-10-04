@@ -11,7 +11,6 @@ import net.minecraftforge.event.entity.living.LivingDeathEvent;
 import net.minecraftforge.event.entity.player.AnvilRepairEvent;
 import net.minecraftforge.event.entity.player.PlayerEvent.ItemCraftedEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import uk.kihira.playerrugs.PlayerRugs;
 import uk.kihira.playerrugs.common.blocks.PlayerRugBlock;
 import uk.kihira.playerrugs.common.config.RugConfig;
 import uk.kihira.playerrugs.common.items.PlayerRugItem;
