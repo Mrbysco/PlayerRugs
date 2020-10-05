@@ -41,7 +41,7 @@ public class StandingPlayerRugArmorModel<T extends LivingEntity> extends EntityM
 			bone.addChild(LeftArm);
 			setRotationAngle(LeftArm, 1.5708F, 0.0F, 0.0F);
 			LeftArm.setTextureOffset(41, 36).addBox(4.0F, -1.5F, 1.0F, 3.0F, 12.0F, 0.0F, 0.0F, false);
-			LeftArm.setTextureOffset(43, 32).addBox(4.0F, 10.5F, 0.0F, 3.0F, 0.0F, 1.0F, 0.0F, false);
+			LeftArm.setTextureOffset(46, 32).addBox(4.0F, 10.5F, 0.0F, 3.0F, 0.0F, 1.0F, 0.0F, false);
 			LeftArm.setTextureOffset(43, 35).addBox(7.0F, -1.5F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
 			LeftArm.setTextureOffset(43, 32).addBox(4.0F, -1.5F, 0.0F, 3.0F, 0.0F, 1.0F, 0.0F, false);
 
@@ -55,7 +55,7 @@ public class StandingPlayerRugArmorModel<T extends LivingEntity> extends EntityM
 			bone.addChild(RightArm);
 			setRotationAngle(RightArm, 1.5708F, 0.0F, 0.0F);
 			RightArm.setTextureOffset(49, 52).addBox(-6.0F, -1.5F, 1.0F, 3.0F, 12.0F, 0.0F, 0.0F, false);
-			RightArm.setTextureOffset(51, 48).addBox(-6.0F, 10.5F, 0.0F, 3.0F, 0.0F, 1.0F, 0.0F, false);
+			RightArm.setTextureOffset(54, 48).addBox(-6.0F, 10.5F, 0.0F, 3.0F, 0.0F, 1.0F, 0.0F, false);
 			RightArm.setTextureOffset(57, 51).addBox(-6.0F, -1.5F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
 			RightArm.setTextureOffset(51, 48).addBox(-6.0F, -1.5F, 0.0F, 3.0F, 0.0F, 1.0F, 0.0F, true);
 
@@ -69,7 +69,7 @@ public class StandingPlayerRugArmorModel<T extends LivingEntity> extends EntityM
 			bone.addChild(LeftArm);
 			setRotationAngle(LeftArm, 1.5708F, 0.0F, 0.0F);
 			LeftArm.setTextureOffset(40, 36).addBox(3.0F, -1.5F, 1.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
-			LeftArm.setTextureOffset(43, 32).addBox(3.0F, 10.5F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, false);
+			LeftArm.setTextureOffset(47, 32).addBox(3.0F, 10.5F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, false);
 			LeftArm.setTextureOffset(43, 35).addBox(7.0F, -1.5F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
 			LeftArm.setTextureOffset(43, 32).addBox(3.0F, -1.5F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, false);
 
@@ -83,7 +83,7 @@ public class StandingPlayerRugArmorModel<T extends LivingEntity> extends EntityM
 			bone.addChild(RightArm);
 			setRotationAngle(RightArm, 1.5708F, 0.0F, 0.0F);
 			RightArm.setTextureOffset(48, 52).addBox(-7.0F, -1.5F, 1.0F, 4.0F, 12.0F, 0.0F, 0.0F, false);
-			RightArm.setTextureOffset(51, 48).addBox(-7.0F, 10.5F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, false);
+			RightArm.setTextureOffset(55, 48).addBox(-7.0F, 10.5F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, false);
 			RightArm.setTextureOffset(59, 51).addBox(-7.0F, -1.5F, 0.0F, 0.0F, 12.0F, 1.0F, 0.0F, false);
 			RightArm.setTextureOffset(51, 48).addBox(-7.0F, -1.5F, 0.0F, 4.0F, 0.0F, 1.0F, 0.0F, true);
 
