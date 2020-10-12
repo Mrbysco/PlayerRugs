@@ -27,9 +27,9 @@ import net.minecraft.util.IItemProvider;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
-import net.minecraftforge.client.model.generators.ExistingFileHelper;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
+import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.common.data.LanguageProvider;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.RegistryObject;
@@ -103,7 +103,7 @@ public class DataCreator {
 
         @Override
         protected void validate(Map<ResourceLocation, LootTable> map, ValidationTracker validationtracker) {
-            map.forEach((name, table) -> LootTableManager.func_227508_a_(validationtracker, name, table));
+            map.forEach((name, table) -> LootTableManager.validateLootTable(validationtracker, name, table));
         }
 
         private class Blocks extends BlockLootTables {

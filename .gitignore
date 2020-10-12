@@ -21,6 +21,7 @@ build
 eclipse
 run
 classes
+logs
 *.bak
 *.bbmodel
 
