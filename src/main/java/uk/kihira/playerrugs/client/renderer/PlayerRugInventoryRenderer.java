@@ -8,9 +8,9 @@ import net.minecraft.client.renderer.tileentity.ItemStackTileEntityRenderer;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
-import net.minecraft.tileentity.SkullTileEntity;
 import net.minecraft.util.Direction;
 import org.apache.commons.lang3.StringUtils;
+import uk.kihira.playerrugs.common.tileentities.PlayerRugTE;
 
 import java.util.UUID;
 
@@ -25,7 +25,7 @@ public class PlayerRugInventoryRenderer extends ItemStackTileEntityRenderer {
                     gameprofile = NBTUtil.readGameProfile(compoundnbt.getCompound("PlayerProfile"));
                 } else if (compoundnbt.contains("PlayerProfile", 8) && !StringUtils.isBlank(compoundnbt.getString("PlayerProfile"))) {
                     GameProfile gameprofile1 = new GameProfile((UUID)null, compoundnbt.getString("PlayerProfile"));
-                    gameprofile = SkullTileEntity.updateGameProfile(gameprofile1);
+                    gameprofile = PlayerRugTE.updateGameProfile(gameprofile1);
                     compoundnbt.remove("PlayerProfile");
                     compoundnbt.put("PlayerProfile", NBTUtil.writeGameProfile(new CompoundNBT(), gameprofile));
                 }

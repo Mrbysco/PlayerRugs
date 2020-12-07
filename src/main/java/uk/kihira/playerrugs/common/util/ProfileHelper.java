@@ -4,9 +4,9 @@ import com.mojang.authlib.GameProfile;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.NBTUtil;
-import net.minecraft.tileentity.SkullTileEntity;
 import net.minecraft.util.StringUtils;
 import uk.kihira.playerrugs.common.RugRegistry;
+import uk.kihira.playerrugs.common.tileentities.PlayerRugTE;
 
 import java.util.UUID;
 
@@ -39,7 +39,7 @@ public class ProfileHelper {
 
         if (profile != null && !StringUtils.isNullOrEmpty(profile.getName())) {
             GameProfile gameprofile = new GameProfile((UUID)null, profile.getName());
-            gameprofile = SkullTileEntity.updateGameProfile(gameprofile);
+            gameprofile = PlayerRugTE.updateGameProfile(gameprofile);
             tag.put("PlayerProfile", NBTUtil.writeGameProfile(new CompoundNBT(), gameprofile));
         }
         stack.setTag(tag);
