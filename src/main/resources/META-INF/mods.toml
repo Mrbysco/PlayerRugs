@@ -1,6 +1,6 @@
 modLoader="javafml"
-loaderVersion="[31,)"
-#issueTrackerURL=""
+loaderVersion="[36,)"
+issueTrackerURL="https://github.com/kihira/PlayerRugs/issues"
 license="MIT"
 
 [[mods]]

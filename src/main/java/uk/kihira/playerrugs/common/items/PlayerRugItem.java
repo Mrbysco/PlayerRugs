@@ -10,7 +10,7 @@ import net.minecraft.nbt.NBTUtil;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
-import uk.kihira.playerrugs.client.renderer.PlayerRugInventoryRenderer;
+import uk.kihira.playerrugs.client.renderer.PlayerRugISTERProvider;
 
 import javax.annotation.Nullable;
 import java.util.List;
@@ -18,7 +18,7 @@ import java.util.List;
 public class PlayerRugItem extends BlockItem {
 
     public PlayerRugItem(Block block, Item.Properties builder) {
-        super(block, builder.setISTER(() -> PlayerRugInventoryRenderer::new));
+        super(block, builder.setISTER(PlayerRugISTERProvider::playerStatue));
     }
 
     @Override
