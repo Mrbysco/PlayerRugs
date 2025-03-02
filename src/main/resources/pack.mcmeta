@@ -1,6 +1,8 @@
 {
     "pack": {
-        "description": "Player Rugs resources",
-        "pack_format": 6
+        "description": {
+            "text": "Player Rugs resources"
+        },
+        "pack_format": 15
     }
 }

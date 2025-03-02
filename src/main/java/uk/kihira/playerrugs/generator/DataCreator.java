@@ -1,48 +1,38 @@
 package uk.kihira.playerrugs.generator;
 
-import com.google.common.collect.ImmutableList;
-import com.mojang.datafixers.util.Pair;
-import net.minecraft.block.Block;
-import net.minecraft.block.Blocks;
 import net.minecraft.data.DataGenerator;
-import net.minecraft.data.IFinishedRecipe;
-import net.minecraft.data.LootTableProvider;
-import net.minecraft.data.RecipeProvider;
-import net.minecraft.data.ShapedRecipeBuilder;
-import net.minecraft.data.loot.BlockLootTables;
-import net.minecraft.item.Item;
-import net.minecraft.item.Items;
-import net.minecraft.loot.ConstantRange;
-import net.minecraft.loot.ItemLootEntry;
-import net.minecraft.loot.LootParameterSet;
-import net.minecraft.loot.LootParameterSets;
-import net.minecraft.loot.LootPool;
-import net.minecraft.loot.LootTable;
-import net.minecraft.loot.LootTable.Builder;
-import net.minecraft.loot.LootTableManager;
-import net.minecraft.loot.ValidationTracker;
-import net.minecraft.loot.functions.CopyNbt;
-import net.minecraft.tags.Tag;
-import net.minecraft.util.IItemProvider;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.data.PackOutput;
+import net.minecraft.data.loot.BlockLootSubProvider;
+import net.minecraft.data.loot.LootTableProvider;
+import net.minecraft.data.recipes.FinishedRecipe;
+import net.minecraft.data.recipes.RecipeCategory;
+import net.minecraft.data.recipes.RecipeProvider;
+import net.minecraft.data.recipes.ShapedRecipeBuilder;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.flag.FeatureFlags;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootTable;
+import net.minecraft.world.level.storage.loot.ValidationContext;
+import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
 import net.minecraftforge.client.model.generators.ModelFile;
+import net.minecraftforge.common.Tags;
 import net.minecraftforge.common.data.ExistingFileHelper;
 import net.minecraftforge.common.data.LanguageProvider;
+import net.minecraftforge.data.event.GatherDataEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.RegistryObject;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber;
 import net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus;
-import net.minecraftforge.fml.event.lifecycle.GatherDataEvent;
+import net.minecraftforge.registries.RegistryObject;
 import uk.kihira.playerrugs.PlayerRugs;
 
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
+import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Supplier;
 
 import static uk.kihira.playerrugs.common.RugRegistry.BLOCKS;
 import static uk.kihira.playerrugs.common.RugRegistry.PLAYER_RUG;
@@ -51,79 +41,74 @@ import static uk.kihira.playerrugs.common.RugRegistry.PLAYER_RUG;
 public class DataCreator {
     @SubscribeEvent
     public static void gatherData(GatherDataEvent event) {
-        DataGenerator gen = event.getGenerator();
+        DataGenerator generator = event.getGenerator();
+        PackOutput packOutput = generator.getPackOutput();
         ExistingFileHelper helper = event.getExistingFileHelper();
 
         if (event.includeServer()) {
-            gen.addProvider(new Recipes(gen));
-            gen.addProvider(new Loots(gen));
+            generator.addProvider(true, new Recipes(packOutput));
+            generator.addProvider(true, new Loots(packOutput));
         }
         if (event.includeClient()) {
-            gen.addProvider(new Language(gen));
-            gen.addProvider(new BlockStates(gen, helper));
-            gen.addProvider(new ItemModels(gen, helper));
+            generator.addProvider(true, new Language(packOutput));
+            generator.addProvider(true, new BlockStates(packOutput, helper));
+            generator.addProvider(true, new ItemModels(packOutput, helper));
         }
     }
 
     private static class Recipes extends RecipeProvider {
-        public Recipes(DataGenerator gen) {
-            super(gen);
+        public Recipes(PackOutput packOutput) {
+            super(packOutput);
         }
 
         @Override
-        protected void registerRecipes(Consumer<IFinishedRecipe> consumer) {
-//            getTier(TIER1_BLOCK.get(), ItemTags.LOGS).build(consumer);
-        }
-
-        private ShapedRecipeBuilder getTier(IItemProvider item, Tag<Item> resource) {
-            return ShapedRecipeBuilder.shapedRecipe(item)
-                    .key('W', Items.WATER_BUCKET)
-                    .key('L', Items.LAVA_BUCKET)
-                    .key('G', Blocks.GLASS)
-                    .key('R', resource)
-                    .patternLine("RRR")
-                    .patternLine("WGL")
-                    .patternLine("RRR")
-                    .addCriterion("has_lava", hasItem(Items.LAVA_BUCKET))
-                    .addCriterion("has_water", hasItem(Items.WATER_BUCKET));
+        protected void buildRecipes(Consumer<FinishedRecipe> consumer) {
+            ShapedRecipeBuilder.shaped(RecipeCategory.MISC, PLAYER_RUG.get())
+                    .pattern(" P ")
+                    .pattern("LLL")
+                    .pattern("LLL")
+                    .define('P', Items.PLAYER_HEAD)
+                    .define('L', Tags.Items.LEATHER)
+                    .unlockedBy("has_player_head", has(Items.PLAYER_HEAD))
+                    .unlockedBy("has_leather", has(Tags.Items.LEATHER))
+                    .save(consumer);
         }
     }
 
     private static class Loots extends LootTableProvider {
-        public Loots(DataGenerator gen) {
-            super(gen);
+
+        public Loots(PackOutput packOutput) {
+            super(packOutput, Set.of(), List.of(
+                    new SubProviderEntry(Blocks::new, LootContextParamSets.BLOCK)
+            ));
         }
 
         @Override
-        protected List<Pair<Supplier<Consumer<BiConsumer<ResourceLocation, Builder>>>, LootParameterSet>> getTables() {
-            return ImmutableList.of(
-                    Pair.of(Blocks::new, LootParameterSets.BLOCK)
-            );
+        protected void validate(Map<ResourceLocation, LootTable> map, ValidationContext validationtracker) {
+            map.forEach((name, table) -> table.validate(validationtracker));
         }
 
-        @Override
-        protected void validate(Map<ResourceLocation, LootTable> map, ValidationTracker validationtracker) {
-            map.forEach((name, table) -> LootTableManager.validateLootTable(validationtracker, name, table));
-        }
+        private static class Blocks extends BlockLootSubProvider {
 
-        private class Blocks extends BlockLootTables {
+            protected Blocks() {
+                super(Set.of(), FeatureFlags.REGISTRY.allFlags());
+            }
+
             @Override
-            protected void addTables() {
-                this.registerLootTable(PLAYER_RUG.get(), (playerHead) -> {
-                    return LootTable.builder().addLootPool(withSurvivesExplosion(playerHead, LootPool.builder().rolls(ConstantRange.of(1)).addEntry(ItemLootEntry.builder(playerHead).acceptFunction(CopyNbt.builder(CopyNbt.Source.BLOCK_ENTITY).replaceOperation("PlayerProfile", "PlayerProfile")))));
-                });
+            protected void generate() {
+                this.add(PLAYER_RUG.get(), createNameableBlockEntityTable(PLAYER_RUG.get()));
             }
 
             @Override
             protected Iterable<Block> getKnownBlocks() {
-                return (Iterable<Block>)BLOCKS.getEntries().stream().map(RegistryObject::get)::iterator;
+                return (Iterable<Block>) BLOCKS.getEntries().stream().map(RegistryObject::get)::iterator;
             }
         }
     }
 
     private static class Language extends LanguageProvider {
-        public Language(DataGenerator gen) {
-            super(gen, PlayerRugs.MOD_ID, "en_us");
+        public Language(PackOutput packOutput) {
+            super(packOutput, PlayerRugs.MOD_ID, "en_us");
         }
 
         @Override
@@ -133,17 +118,17 @@ public class DataCreator {
     }
 
     private static class ItemModels extends ItemModelProvider {
-        public ItemModels(DataGenerator gen, ExistingFileHelper helper) {
-            super(gen, PlayerRugs.MOD_ID, helper);
+        public ItemModels(PackOutput packOutput, ExistingFileHelper helper) {
+            super(packOutput, PlayerRugs.MOD_ID, helper);
         }
 
         @Override
         protected void registerModels() {
-            makeTier(PLAYER_RUG.get());
+            makeTier(PLAYER_RUG);
         }
 
-        private void makeTier(Block block) {
-            String path = block.getRegistryName().getPath();
+        private void makeTier(RegistryObject<? extends Block> registryObject) {
+            String path = registryObject.getId().getPath();
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile(modLoc("block/" + path)));
         }
@@ -156,18 +141,18 @@ public class DataCreator {
 
     private static class BlockStates extends BlockStateProvider {
 
-        public BlockStates(DataGenerator gen, ExistingFileHelper helper) {
-            super(gen, PlayerRugs.MOD_ID, helper);
+        public BlockStates(PackOutput packOutput, ExistingFileHelper helper) {
+            super(packOutput, PlayerRugs.MOD_ID, helper);
         }
 
         @Override
         protected void registerStatesAndModels() {
-            makeState(PLAYER_RUG.get());
+            makeState(PLAYER_RUG);
         }
 
-        private void makeState(Block block) {
-            ModelFile model = models().getExistingFile(modLoc(block.getRegistryName().getPath()));
-            getVariantBuilder(block).forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
+        private void makeState(RegistryObject<? extends Block> registryObject) {
+            ModelFile model = models().getExistingFile(modLoc(registryObject.getId().getPath()));
+            getVariantBuilder(registryObject.get()).forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
         }
     }
 }

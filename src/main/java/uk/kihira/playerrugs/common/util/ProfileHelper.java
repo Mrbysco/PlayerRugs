@@ -1,14 +1,14 @@
 package uk.kihira.playerrugs.common.util;
 
 import com.mojang.authlib.GameProfile;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.CompoundNBT;
-import net.minecraft.nbt.NBTUtil;
-import net.minecraft.util.StringUtils;
+import net.minecraft.Util;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.NbtUtils;
+import net.minecraft.world.item.ItemStack;
 import uk.kihira.playerrugs.common.RugRegistry;
-import uk.kihira.playerrugs.common.tileentities.PlayerRugTE;
+import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
 
-import java.util.UUID;
+import javax.annotation.Nullable;
 
 public class ProfileHelper {
     public static GameProfile getGameProfileFromStack(ItemStack stack) {
@@ -16,33 +16,42 @@ public class ProfileHelper {
             return null;
         }
         GameProfile playerProfile = null;
-        CompoundNBT nbttagcompound = stack.getTag() != null ? stack.getTag() : new CompoundNBT();
+        CompoundTag tag = stack.getTag() != null ? stack.getTag() : new CompoundTag();
 
-        if (nbttagcompound.contains("SkullOwner", 10)) {
-            playerProfile = NBTUtil.readGameProfile(nbttagcompound.getCompound("SkullOwner"));
+        if (tag.contains("SkullOwner", 10)) {
+            playerProfile = NbtUtils.readGameProfile(tag.getCompound("SkullOwner"));
         }
         // Old version skulls
-        else if (nbttagcompound.contains("SkullOwner", 8) && nbttagcompound.getString("SkullOwner").length() > 0) {
-            playerProfile = new GameProfile(null, nbttagcompound.getString("SkullOwner"));
+        else if (tag.contains("SkullOwner", 8) && !Util.isBlank(tag.getString("SkullOwner"))) {
+            playerProfile = new GameProfile(null, tag.getString("SkullOwner"));
         }
 
         return playerProfile;
     }
 
-    public static ItemStack getPlayerRugStack(GameProfile profile) {
-        ItemStack itemStack = new ItemStack(RugRegistry.PLAYER_RUG.get());
+    public static ItemStack getPlayerRugStack(@Nullable GameProfile profile) {
+        if (profile == null) {
+            return ItemStack.EMPTY;
+        }
+        ItemStack itemStack = RugRegistry.PLAYER_RUG_ITEM.get().getDefaultInstance();
         return addGameProfileToStack(itemStack, profile);
     }
 
-    public static ItemStack addGameProfileToStack(ItemStack stack, GameProfile profile) {
-        CompoundNBT tag = new CompoundNBT();
-
-        if (profile != null && !StringUtils.isNullOrEmpty(profile.getName())) {
-            GameProfile gameprofile = new GameProfile((UUID)null, profile.getName());
-            gameprofile = PlayerRugTE.updateGameProfile(gameprofile);
-            tag.put("PlayerProfile", NBTUtil.writeGameProfile(new CompoundNBT(), gameprofile));
+    public static ItemStack addGameProfileToStack(ItemStack stack, @Nullable GameProfile profile) {
+        if (profile == null) {
+            return stack;
         }
-        stack.setTag(tag);
+
+        if (!Util.isBlank(profile.getName())) {
+            CompoundTag tag = new CompoundTag();
+            tag.put("PlayerProfile", NbtUtils.writeGameProfile(new CompoundTag(), profile));
+            stack.setTag(tag);
+
+            PlayerRugBlockEntity.updateGameProfile(profile, (newProfile) -> {
+                tag.put("PlayerProfile", NbtUtils.writeGameProfile(new CompoundTag(), newProfile));
+                stack.setTag(tag);
+            });
+        }
 
         return stack;
     }

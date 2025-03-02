@@ -2,31 +2,26 @@
   "type": "minecraft:block",
   "pools": [
     {
-      "rolls": 1,
+      "bonus_rolls": 0.0,
+      "conditions": [
+        {
+          "condition": "minecraft:survives_explosion"
+        }
+      ],
       "entries": [
         {
           "type": "minecraft:item",
           "functions": [
             {
-              "function": "minecraft:copy_nbt",
-              "source": "block_entity",
-              "ops": [
-                {
-                  "source": "PlayerProfile",
-                  "target": "PlayerProfile",
-                  "op": "replace"
-                }
-              ]
+              "function": "minecraft:copy_name",
+              "source": "block_entity"
             }
           ],
           "name": "playerrugs:player_rug"
         }
       ],
-      "conditions": [
-        {
-          "condition": "minecraft:survives_explosion"
-        }
-      ]
+      "rolls": 1.0
     }
-  ]
+  ],
+  "random_sequence": "playerrugs:blocks/player_rug"
 }

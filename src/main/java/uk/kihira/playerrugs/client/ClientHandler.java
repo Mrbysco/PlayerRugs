@@ -1,12 +1,45 @@
 package uk.kihira.playerrugs.client;
 
-import net.minecraftforge.fml.client.registry.ClientRegistry;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
-import uk.kihira.playerrugs.client.renderer.PlayerRugTESR;
+import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.telemetry.events.WorldUnloadEvent;
+import net.minecraft.server.Services;
+import net.minecraft.server.players.GameProfileCache;
+import net.minecraftforge.client.event.ClientPlayerNetworkEvent;
+import net.minecraftforge.client.event.EntityRenderersEvent.RegisterRenderers;
+import net.minecraftforge.event.level.LevelEvent;
+import uk.kihira.playerrugs.client.renderer.PlayerRugBER;
 import uk.kihira.playerrugs.common.RugRegistry;
+import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
 
 public class ClientHandler {
-    public static void registerRenders(FMLClientSetupEvent event) {
-        ClientRegistry.bindTileEntityRenderer(RugRegistry.PLAYER_RUG_TILE.get(), PlayerRugTESR::new);
+    public static void registerRenders(RegisterRenderers event) {
+        event.registerBlockEntityRenderer(RugRegistry.PLAYER_RUG_BLOCK_ENTITY.get(), PlayerRugBER::new);
+    }
+
+    public static void onLogin(ClientPlayerNetworkEvent.LoggingIn event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.isLocalServer()) {
+            setPlayerCache(mc);
+        }
+    }
+
+    public static void onRespawn(ClientPlayerNetworkEvent.Clone event) {
+        Minecraft mc = Minecraft.getInstance();
+        if (!mc.isLocalServer()) {
+            setPlayerCache(mc);
+        }
+    }
+
+    private static void setPlayerCache(Minecraft mc) {
+        YggdrasilAuthenticationService authenticationService = new YggdrasilAuthenticationService(mc.getProxy());
+        Services services = Services.create(authenticationService, mc.gameDirectory);
+        services.profileCache().setExecutor(mc);
+        PlayerRugBlockEntity.setup(services, mc);
+        GameProfileCache.setUsesAuthentication(false);
+    }
+
+    public static void onUnload(LevelEvent.Unload event) {
+        PlayerRugBlockEntity.clear();
     }
 }
