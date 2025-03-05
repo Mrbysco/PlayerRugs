@@ -49,10 +49,8 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
         render(direction, profile, blockEntity.isSlim(), standing, poseStack, buffer, packedLight);
     }
 
-    public void render(Direction direction, @Nullable GameProfile profile, boolean isSlim, boolean standing,
+    public void render(Direction direction, @Nullable GameProfile profile, boolean slimModel, boolean standing,
                        PoseStack poseStack, MultiBufferSource bufferSource, int combinedLight) {
-        final boolean slimModel = profile != null && (profile.getId().hashCode() & 1) == 1;
-
         poseStack.translate(0.5f, 0.001d, 0.5f);
         // Render head
         poseStack.pushPose();
