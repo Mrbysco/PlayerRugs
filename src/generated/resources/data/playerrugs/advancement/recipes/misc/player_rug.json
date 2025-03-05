@@ -5,7 +5,7 @@
       "conditions": {
         "items": [
           {
-            "tag": "forge:leather"
+            "items": "#c:leathers"
           }
         ]
       },
@@ -15,9 +15,7 @@
       "conditions": {
         "items": [
           {
-            "items": [
-              "minecraft:player_head"
-            ]
+            "items": "minecraft:player_head"
           }
         ]
       },
@@ -32,15 +30,14 @@
   },
   "requirements": [
     [
+      "has_the_recipe",
       "has_player_head",
-      "has_leather",
-      "has_the_recipe"
+      "has_leather"
     ]
   ],
   "rewards": {
     "recipes": [
       "playerrugs:player_rug"
     ]
-  },
-  "sends_telemetry_event": false
+  }
 }

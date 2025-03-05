@@ -3,17 +3,17 @@ package uk.kihira.playerrugs;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraft.world.item.CreativeModeTabs;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
-import net.minecraftforge.event.RegisterCommandsEvent;
-import net.minecraftforge.event.server.ServerAboutToStartEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.DistExecutor;
-import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.config.ModConfig;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.fml.config.ModConfig;
+import net.neoforged.neoforge.client.gui.ConfigurationScreen;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.RegisterCommandsEvent;
+import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import uk.kihira.playerrugs.client.ClientHandler;
@@ -29,27 +29,27 @@ public class PlayerRugs {
 
     public static final Logger LOGGER = LogManager.getLogger();
 
-    public PlayerRugs() {
-        IEventBus eventBus = FMLJavaModLoadingContext.get().getModEventBus();
-        ModLoadingContext.get().registerConfig(ModConfig.Type.SERVER, RugConfig.serverSpec);
+    public PlayerRugs(IEventBus eventBus, Dist dist, ModContainer container) {
+        container.registerConfig(ModConfig.Type.SERVER, RugConfig.serverSpec);
         eventBus.register(RugConfig.class);
 
         RugRegistry.BLOCKS.register(eventBus);
         RugRegistry.ITEMS.register(eventBus);
         RugRegistry.BLOCK_ENTITIES.register(eventBus);
 
-        MinecraftForge.EVENT_BUS.addListener(this::onCommandRegister);
-        MinecraftForge.EVENT_BUS.addListener(this::serverAboutToStart);
+        NeoForge.EVENT_BUS.addListener(this::onCommandRegister);
+        NeoForge.EVENT_BUS.addListener(this::serverAboutToStart);
         eventBus.addListener(this::addTabContents);
 
-        MinecraftForge.EVENT_BUS.register(new RugEventHandler());
+        NeoForge.EVENT_BUS.register(new RugEventHandler());
 
-        DistExecutor.unsafeRunWhenOn(Dist.CLIENT, () -> () -> {
+        if (dist.isClient()) {
+            container.registerExtensionPoint(IConfigScreenFactory.class, ConfigurationScreen::new);
             eventBus.addListener(ClientHandler::registerRenders);
-            MinecraftForge.EVENT_BUS.addListener(ClientHandler::onLogin);
-            MinecraftForge.EVENT_BUS.addListener(ClientHandler::onRespawn);
-            MinecraftForge.EVENT_BUS.addListener(ClientHandler::onUnload);
-        });
+            NeoForge.EVENT_BUS.addListener(ClientHandler::onLogin);
+            NeoForge.EVENT_BUS.addListener(ClientHandler::onRespawn);
+            NeoForge.EVENT_BUS.addListener(ClientHandler::onUnload);
+        }
 
     }
 
@@ -59,7 +59,7 @@ public class PlayerRugs {
 
     public void serverAboutToStart(final ServerAboutToStartEvent event) {
         MinecraftServer server = event.getServer();
-        PlayerRugBlockEntity.setup(server.getProfileCache(), server.getSessionService(), server);
+        PlayerRugBlockEntity.setup(server.services, server);
         GameProfileCache.setUsesAuthentication(server.usesAuthentication());
     }
 

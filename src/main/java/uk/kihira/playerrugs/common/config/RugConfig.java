@@ -1,9 +1,9 @@
 package uk.kihira.playerrugs.common.config;
 
-import net.minecraftforge.common.ForgeConfigSpec;
-import net.minecraftforge.common.ForgeConfigSpec.BooleanValue;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.config.ModConfigEvent;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
+import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.kihira.playerrugs.PlayerRugs;
 
@@ -11,7 +11,7 @@ public class RugConfig {
     public static class Server {
         public final BooleanValue easyCrafting;
 
-        Server(ForgeConfigSpec.Builder builder) {
+        Server(ModConfigSpec.Builder builder) {
             builder.comment("Server settings")
                     .push("Server");
 
@@ -23,17 +23,17 @@ public class RugConfig {
         }
     }
 
-    public static final ForgeConfigSpec serverSpec;
+    public static final ModConfigSpec serverSpec;
     public static final RugConfig.Server SERVER;
 
     static {
-        final Pair<Server, ForgeConfigSpec> specPair = new ForgeConfigSpec.Builder().configure(RugConfig.Server::new);
+        final Pair<Server, ModConfigSpec> specPair = new ModConfigSpec.Builder().configure(RugConfig.Server::new);
         serverSpec = specPair.getRight();
         SERVER = specPair.getLeft();
     }
 
     @SubscribeEvent
-    public static void onLoad(final ModConfigEvent.Loading configEvent) {
+    public static void onLoad(final net.neoforged.fml.event.config.ModConfigEvent.Loading configEvent) {
         PlayerRugs.LOGGER.debug("Loaded Player Rugs' config file {}", configEvent.getConfig().getFileName());
     }
 

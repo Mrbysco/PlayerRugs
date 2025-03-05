@@ -13,13 +13,9 @@
           "type": "minecraft:item",
           "functions": [
             {
-              "function": "minecraft:copy_nbt",
-              "ops": [
-                {
-                  "op": "replace",
-                  "source": "PlayerProfile",
-                  "target": "PlayerProfile"
-                }
+              "function": "minecraft:copy_components",
+              "include": [
+                "minecraft:profile"
               ],
               "source": "block_entity"
             }

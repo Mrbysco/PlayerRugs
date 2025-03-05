@@ -3,7 +3,7 @@
   "category": "misc",
   "key": {
     "L": {
-      "tag": "forge:leather"
+      "tag": "c:leathers"
     },
     "P": {
       "item": "minecraft:player_head"
@@ -15,7 +15,7 @@
     "LLL"
   ],
   "result": {
-    "item": "playerrugs:player_rug"
-  },
-  "show_notification": true
+    "count": 1,
+    "id": "playerrugs:player_rug"
+  }
 }

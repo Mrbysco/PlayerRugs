@@ -1,8 +1,5 @@
 package uk.kihira.playerrugs.client.renderer;
 
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.minecraft.MinecraftProfileTexture;
-import com.mojang.authlib.minecraft.MinecraftProfileTexture.Type;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -15,23 +12,23 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.client.resources.SkinManager;
 import net.minecraft.core.Direction;
-import net.minecraft.core.UUIDUtil;
 import net.minecraft.core.Vec3i;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.block.state.BlockState;
-import org.joml.Matrix3f;
 import org.joml.Matrix4f;
 import uk.kihira.playerrugs.common.block.PlayerRugBlock;
 import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
 
 import javax.annotation.Nullable;
-import java.util.Map;
 
 public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
-    public static final ResourceLocation defaultTexture = DefaultPlayerSkin.getDefaultSkin();
+    public static final ResourceLocation defaultTexture = DefaultPlayerSkin.getDefaultTexture();
 
     public final SkullModel headModel;
+    public boolean isSlim = false;
 
     public PlayerRugBER(BlockEntityRendererProvider.Context context) {
         this.headModel = new SkullModel(context.bakeLayer(ModelLayers.PLAYER_HEAD));
@@ -43,14 +40,19 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
         BlockState blockstate = blockEntity.getBlockState();
         boolean flag = blockstate.getBlock() instanceof PlayerRugBlock;
         Direction direction = flag ? blockstate.getValue(PlayerRugBlock.FACING) : Direction.UP;
-        GameProfile profile = blockEntity.getPlayerProfile();
+        ResolvableProfile resolvableProfile = blockEntity.getPlayerProfile();
+        if (resolvableProfile != null) {
+            SkinManager skinmanager = Minecraft.getInstance().getSkinManager();
+            if (isSlim != skinmanager.getInsecureSkin(resolvableProfile.gameProfile()).model().id().equals("slim"))
+                isSlim = !isSlim;
+        }
         boolean standing = blockstate.getValue(PlayerRugBlock.STANDING);
 
-        render(direction, profile, blockEntity.isSlim(), standing, poseStack, buffer, packedLight);
+        renderRug(direction, resolvableProfile, this.isSlim, standing, poseStack, buffer, packedLight, this.headModel);
     }
 
-    public void render(Direction direction, @Nullable GameProfile profile, boolean slimModel, boolean standing,
-                       PoseStack poseStack, MultiBufferSource bufferSource, int combinedLight) {
+    public static void renderRug(Direction direction, @Nullable ResolvableProfile resolvableProfile, boolean slim, boolean standing,
+                          PoseStack poseStack, MultiBufferSource bufferSource, int combinedLight, SkullModel model) {
         poseStack.translate(0.5f, 0.001d, 0.5f);
         // Render head
         poseStack.pushPose();
@@ -64,9 +66,9 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
         poseStack.translate(0, -0.001, standing ? 8f / 16f : -9f / 16f);
         poseStack.scale(-1.0F, -1.0F, 1.0F);
 
-        RenderType headType = getRenderType(profile);
+        RenderType headType = getRenderType(resolvableProfile);
         VertexConsumer buffer = bufferSource.getBuffer(headType);
-        headModel.renderToBuffer(poseStack, buffer, combinedLight, OverlayTexture.NO_OVERLAY, 1.0F, 1.0F, 1.0F, 1.0F);
+        model.renderToBuffer(poseStack, buffer, combinedLight, OverlayTexture.NO_OVERLAY, -1);
 
 //		RenderSystem.disableRescaleNormal();
         poseStack.popPose();
@@ -83,7 +85,7 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
             bufferSource1.endBatch(headType);
         }
 
-        RenderType rugType = PRRenderType.playerRug(getSkinLocation(profile));
+        RenderType rugType = PRRenderType.playerRug(getSkinLocation(resolvableProfile));
         VertexConsumer builder = bufferSource.getBuffer(rugType);
 
         float texHeight = 64;
@@ -98,15 +100,15 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
             xOffset = -0.5f;
             zOffset = 1f / 16f - 0.5f;
             buildBodyPart(builder, poseStack,
-                    xOffset + (slimModel ? 1f / 16f : 0f), yOffset, zOffset,
-                    (slimModel ? 3f : 4f) / 16f, thickness, 12f / 16f,
-                    (slimModel ? 39f : 40f) / texWidth, 52f / texHeight, 36f / texWidth, 64f / texHeight,
+                    xOffset + (slim ? 1f / 16f : 0f), yOffset, zOffset,
+                    (slim ? 3f : 4f) / 16f, thickness, 12f / 16f,
+                    (slim ? 39f : 40f) / texWidth, 52f / texHeight, 36f / texWidth, 64f / texHeight,
                     texWidth, texHeight, combinedLight);
         } else {
             buildBodyPart(builder, poseStack,
-                    xOffset, yOffset, zOffset - (slimModel ? 1f / 16f : 0f),
-                    -12f / 16f, thickness, -(slimModel ? 3f : 4f) / 16f,
-                    (slimModel ? 46f : 48f) / texWidth, 52f / texHeight, (slimModel ? 43f : 44f) / texWidth, 64f / texHeight,
+                    xOffset, yOffset, zOffset - (slim ? 1f / 16f : 0f),
+                    -12f / 16f, thickness, -(slim ? 3f : 4f) / 16f,
+                    (slim ? 46f : 48f) / texWidth, 52f / texHeight, (slim ? 43f : 44f) / texWidth, 64f / texHeight,
                     texWidth, texHeight, combinedLight);
         }
 
@@ -116,14 +118,14 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
         if (standing) {
             buildBodyPart(builder, poseStack,
                     xOffset, yOffset, zOffset,
-                    (slimModel ? 3f : 4f) / 16f, thickness, 12f / 16f,
-                    (slimModel ? 47f : 48f) / texWidth, 20f / texHeight, 44f / texWidth, 32f / texHeight,
+                    (slim ? 3f : 4f) / 16f, thickness, 12f / 16f,
+                    (slim ? 47f : 48f) / texWidth, 20f / texHeight, 44f / texWidth, 32f / texHeight,
                     texWidth, texHeight, combinedLight);
         } else {
             buildBodyPart(builder, poseStack,
                     xOffset, yOffset, zOffset,
-                    12f / 16f, thickness, (slimModel ? 3f : 4f) / 16f,
-                    (slimModel ? 54f : 56f) / texWidth, 20f / texHeight, (slimModel ? 51f : 52f) / texWidth, 32f / texHeight,
+                    12f / 16f, thickness, (slim ? 3f : 4f) / 16f,
+                    (slim ? 54f : 56f) / texWidth, 20f / texHeight, (slim ? 51f : 52f) / texWidth, 32f / texHeight,
                     texWidth, texHeight, combinedLight);
         }
 
@@ -161,31 +163,16 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
         poseStack.popPose();
     }
 
-    public static RenderType getRenderType(@Nullable GameProfile gameProfileIn) {
-        if (gameProfileIn == null || !gameProfileIn.isComplete()) {
-            return RenderType.entityCutoutNoCull(defaultTexture);
-        } else {
-            final Minecraft minecraft = Minecraft.getInstance();
-            final Map<Type, MinecraftProfileTexture> map = minecraft.getSkinManager().getInsecureSkinInformation(gameProfileIn);
-            if (map.containsKey(Type.SKIN)) {
-                return RenderType.entityTranslucent(minecraft.getSkinManager().registerTexture((MinecraftProfileTexture) map.get(Type.SKIN), Type.SKIN));
-            } else {
-                return RenderType.entityCutoutNoCull(DefaultPlayerSkin.getDefaultSkin(UUIDUtil.getOrCreatePlayerUUID(gameProfileIn)));
-            }
-        }
+    public static RenderType getRenderType(@Nullable ResolvableProfile resolvableProfile) {
+        return RenderType.entityTranslucent(getSkinLocation(resolvableProfile));
     }
 
-    public static ResourceLocation getSkinLocation(@Nullable GameProfile gameProfileIn) {
-        if (gameProfileIn == null || !gameProfileIn.isComplete()) {
+    public static ResourceLocation getSkinLocation(@Nullable ResolvableProfile resolvableProfile) {
+        if (resolvableProfile == null) {
             return defaultTexture;
         } else {
-            final Minecraft minecraft = Minecraft.getInstance();
-            final Map<Type, MinecraftProfileTexture> map = minecraft.getSkinManager().getInsecureSkinInformation(gameProfileIn);
-            if (map.containsKey(Type.SKIN)) {
-                return minecraft.getSkinManager().registerTexture((MinecraftProfileTexture) map.get(Type.SKIN), Type.SKIN);
-            } else {
-                return DefaultPlayerSkin.getDefaultSkin(UUIDUtil.getOrCreatePlayerUUID(gameProfileIn));
-            }
+            SkinManager skinmanager = Minecraft.getInstance().getSkinManager();
+            return skinmanager.getInsecureSkin(resolvableProfile.gameProfile()).texture();
         }
     }
 
@@ -274,13 +261,11 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
                                         float x, float y, float z, float u, float v,
                                         int combinedLight, Vec3i directionVec) {
         Matrix4f matrix4f = pose.pose();
-        Matrix3f matrix3f = pose.normal();
-        builder.vertex(matrix4f, x, y, z)
-                .color(1.0F, 1.0F, 1.0F, 1.0F)
-                .uv(u, v)
-                .overlayCoords(OverlayTexture.NO_OVERLAY)
-                .uv2(combinedLight)
-                .normal(matrix3f, directionVec.getX(), directionVec.getY(), directionVec.getZ())
-                .endVertex();
+        builder.addVertex(matrix4f, x, y, z)
+                .setColor(1.0F, 1.0F, 1.0F, 1.0F)
+                .setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY)
+                .setLight(combinedLight)
+                .setNormal(pose, directionVec.getX(), directionVec.getY(), directionVec.getZ());
     }
 }
