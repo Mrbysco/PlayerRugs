@@ -18,7 +18,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import uk.kihira.playerrugs.PlayerRugs;
 import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
 
 import javax.annotation.Nullable;
