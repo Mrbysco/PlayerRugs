@@ -18,6 +18,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import uk.kihira.playerrugs.PlayerRugs;
 import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
 
 import javax.annotation.Nullable;
@@ -89,15 +90,14 @@ public class PlayerRugInventoryRenderer extends BlockEntityWithoutLevelRenderer 
                 poseStack.mulPose(Axis.XN.rotationDegrees(90));
                 poseStack.mulPose(Axis.YP.rotationDegrees(180));
             }
-            render(Direction.NORTH, gameprofile, false, false, poseStack, buffer, packedLight);
+            //Render the inventory model as slim (until we figure out how to get the model type from the gameprofile)
+            render(Direction.NORTH, gameprofile, true, false, poseStack, buffer, packedLight);
             poseStack.popPose();
         }
     }
 
-    public void render(Direction direction, @Nullable GameProfile profile, boolean isSlim, boolean standing,
+    public void render(Direction direction, @Nullable GameProfile profile, boolean slimModel, boolean standing,
                        PoseStack poseStack, MultiBufferSource bufferSource, int combinedLight) {
-        final boolean slimModel = profile != null && profile.getId() != null && (profile.getId().hashCode() & 1) == 1;
-
         poseStack.translate(0.5f, 0.001d, 0.5f);
         // Render head
         poseStack.pushPose();
