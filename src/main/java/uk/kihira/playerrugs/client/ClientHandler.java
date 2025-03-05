@@ -2,7 +2,6 @@ package uk.kihira.playerrugs.client;
 
 import com.mojang.authlib.yggdrasil.YggdrasilAuthenticationService;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.telemetry.events.WorldUnloadEvent;
 import net.minecraft.server.Services;
 import net.minecraft.server.players.GameProfileCache;
 import net.minecraftforge.client.event.ClientPlayerNetworkEvent;

@@ -52,9 +52,9 @@ public class RugEventHandler {
     public void onItemCrafted(ItemCraftedEvent event) {
         Container inventory = event.getInventory();
         ItemStack skullStack = ItemStack.EMPTY;
-        for(int i = 0; i < inventory.getContainerSize(); i++) {
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
             ItemStack foundStack = inventory.getItem(i);
-            if(!foundStack.isEmpty() && foundStack.getItem() == Items.PLAYER_HEAD) {
+            if (!foundStack.isEmpty() && foundStack.getItem() == Items.PLAYER_HEAD) {
                 skullStack = foundStack;
             }
         }
