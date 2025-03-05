@@ -1,3 +1,4 @@
 {
-  "block.playerrugs.player_rug": "Player Rug"
+  "block.playerrugs.player_rug": "Player Rug",
+  "playerrugs.tooltip": "Player: %s"
 }

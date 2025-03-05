@@ -12,9 +12,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.flag.FeatureFlags;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.storage.loot.LootPool;
 import net.minecraft.world.level.storage.loot.LootTable;
 import net.minecraft.world.level.storage.loot.ValidationContext;
+import net.minecraft.world.level.storage.loot.entries.LootItem;
+import net.minecraft.world.level.storage.loot.functions.CopyNbtFunction;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParamSets;
+import net.minecraft.world.level.storage.loot.providers.nbt.ContextNbtProvider;
+import net.minecraft.world.level.storage.loot.providers.number.ConstantValue;
 import net.minecraftforge.client.model.generators.BlockStateProvider;
 import net.minecraftforge.client.model.generators.ConfiguredModel;
 import net.minecraftforge.client.model.generators.ItemModelProvider;
@@ -96,7 +101,14 @@ public class DataCreator {
 
             @Override
             protected void generate() {
-                this.add(PLAYER_RUG.get(), createNameableBlockEntityTable(PLAYER_RUG.get()));
+                this.add(PLAYER_RUG.get(), (block) ->
+                        LootTable.lootTable()
+                                .withPool(this.applyExplosionCondition(block, LootPool.lootPool()
+                                        .setRolls(ConstantValue.exactly(1.0F))
+                                        .add(LootItem.lootTableItem(block)
+                                                .apply(CopyNbtFunction.copyData(ContextNbtProvider.BLOCK_ENTITY)
+                                                        .copy("PlayerProfile", "PlayerProfile")
+                                                )))));
             }
 
             @Override
@@ -114,6 +126,7 @@ public class DataCreator {
         @Override
         protected void addTranslations() {
             add(PLAYER_RUG.get(), "Player Rug");
+            add("playerrugs.tooltip", "Player: %s");
         }
     }
 
@@ -124,10 +137,11 @@ public class DataCreator {
 
         @Override
         protected void registerModels() {
-            makeTier(PLAYER_RUG);
+            makeUnchecked(PLAYER_RUG);
         }
 
-        private void makeTier(RegistryObject<? extends Block> registryObject) {
+        @SuppressWarnings("SameParameterValue")
+        private void makeUnchecked(RegistryObject<? extends Block> registryObject) {
             String path = registryObject.getId().getPath();
             getBuilder(path)
                     .parent(new ModelFile.UncheckedModelFile(modLoc("block/" + path)));
@@ -150,6 +164,7 @@ public class DataCreator {
             makeState(PLAYER_RUG);
         }
 
+        @SuppressWarnings("SameParameterValue")
         private void makeState(RegistryObject<? extends Block> registryObject) {
             ModelFile model = models().getExistingFile(modLoc(registryObject.getId().getPath()));
             getVariantBuilder(registryObject.get()).forAllStates(state -> ConfiguredModel.builder().modelFile(model).build());
