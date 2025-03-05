@@ -28,6 +28,7 @@ import net.minecraft.world.phys.HitResult;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
 import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
+import uk.kihira.playerrugs.common.util.ProfileHelper;
 
 import javax.annotation.Nullable;
 import java.util.Objects;
@@ -103,7 +104,7 @@ public class PlayerRugBlock extends BaseEntityBlock {
     public ItemStack getCloneItemStack(BlockState state, HitResult target, BlockGetter level, BlockPos pos, Player player) {
         ItemStack stack = super.getCloneItemStack(state, target, level, pos, player);
         if (level.getBlockEntity(pos) instanceof PlayerRugBlockEntity playerRugBlockEntity) {
-            playerRugBlockEntity.saveToItem(stack);
+            return ProfileHelper.getPlayerRugStack(playerRugBlockEntity.getPlayerProfile());
         }
         return stack;
     }
