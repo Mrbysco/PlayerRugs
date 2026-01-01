@@ -2,7 +2,7 @@ plugins {
     id 'idea'
     id 'java-library'
     id 'maven-publish'
-    id 'net.neoforged.moddev' version '2.0.78'
+    id 'net.neoforged.moddev' version '2.0.136'
 }
 
 version = "${version}"
@@ -28,16 +28,23 @@ neoForge {
         }
         server {
             server()
+            programArgument '--nogui'
         }
         data {
-            data()
+            clientData()
 
             // Specify the modid for data generation, where to output the resulting resource, and where to look for existing resources.
-            programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
+            programArguments.addAll '--mod', "${mod_id}", '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
 
         configureEach { run ->
             systemProperty 'forge.logging.markers', 'REGISTRIES'
+
+            jvmArgument '-Xmx4G'
+
+            if (javaToolchains.launcherFor(java.toolchain).map { it.metadata.vendor }.getOrElse('').contains('JetBrains')) {
+                jvmArguments.addAll('-XX:+IgnoreUnrecognizedVMOptions', '-XX:+AllowEnhancedClassRedefinition')
+            }
 
             jvmArgument '-Xmx4G'
 

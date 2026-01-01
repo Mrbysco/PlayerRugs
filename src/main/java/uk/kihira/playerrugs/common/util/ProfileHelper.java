@@ -6,7 +6,6 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
 import org.jetbrains.annotations.Nullable;
 import uk.kihira.playerrugs.common.RugRegistry;
-import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
 
 
 public class ProfileHelper {
@@ -26,19 +25,12 @@ public class ProfileHelper {
         return addGameProfileToStack(itemStack, profile);
     }
 
-    public static ItemStack addGameProfileToStack(ItemStack stack, @Nullable GameProfile profile) {
+    public static ItemStack addGameProfileToStack(ItemStack stack, GameProfile profile) {
         if (profile == null) {
             return stack;
         }
-
-        ResolvableProfile resolvableProfile = new ResolvableProfile(profile);
+        ResolvableProfile resolvableProfile = ResolvableProfile.createResolved(profile);
         stack.set(DataComponents.PROFILE, resolvableProfile);
-
-        if (!resolvableProfile.isResolved()) {
-            PlayerRugBlockEntity.resolve(resolvableProfile).thenAcceptAsync(finalProfile -> {
-                stack.set(DataComponents.PROFILE, finalProfile);
-            }, PlayerRugBlockEntity.CHECKED_MAIN_THREAD_EXECUTOR);
-        }
 
         return stack;
     }

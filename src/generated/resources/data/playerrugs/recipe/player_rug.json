@@ -2,12 +2,8 @@
   "type": "minecraft:crafting_shaped",
   "category": "misc",
   "key": {
-    "L": {
-      "tag": "c:leathers"
-    },
-    "P": {
-      "item": "minecraft:player_head"
-    }
+    "L": "#c:leathers",
+    "P": "minecraft:player_head"
   },
   "pattern": [
     " P ",

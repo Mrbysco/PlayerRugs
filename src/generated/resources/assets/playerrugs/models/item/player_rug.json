@@ -1,3 +1,6 @@
 {
-  "parent": "playerrugs:block/player_rug"
+  "parent": "playerrugs:block/player_rug",
+  "textures": {
+    "particle": "playerrugs:block/player_rug"
+  }
 }

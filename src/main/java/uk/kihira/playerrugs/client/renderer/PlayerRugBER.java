@@ -4,59 +4,89 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.SkullModel;
 import net.minecraft.client.model.geom.ModelLayers;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.model.object.skull.SkullModel;
+import net.minecraft.client.model.object.skull.SkullModelBase;
+import net.minecraft.client.renderer.PlayerSkinRenderCache;
+import net.minecraft.client.renderer.SubmitNodeCollector;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
+import net.minecraft.client.renderer.feature.ModelFeatureRenderer;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
+import net.minecraft.client.renderer.state.CameraRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.DefaultPlayerSkin;
 import net.minecraft.client.resources.SkinManager;
 import net.minecraft.core.Direction;
 import net.minecraft.core.Vec3i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
+import net.minecraft.world.entity.player.PlayerSkin;
 import net.minecraft.world.item.component.ResolvableProfile;
-import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.phys.Vec3;
 import org.joml.Matrix4f;
+import org.jspecify.annotations.Nullable;
 import uk.kihira.playerrugs.common.block.PlayerRugBlock;
 import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
 
-import javax.annotation.Nullable;
+import java.util.function.Supplier;
 
-public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
-    public static final ResourceLocation defaultTexture = DefaultPlayerSkin.getDefaultTexture();
+public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity, PlayerRugRenderState> {
+    private final PlayerSkinRenderCache playerSkinRenderCache;
+    public static final Identifier defaultTexture = DefaultPlayerSkin.getDefaultTexture();
 
     public final SkullModel headModel;
-    public boolean isSlim = false;
 
     public PlayerRugBER(BlockEntityRendererProvider.Context context) {
         this.headModel = new SkullModel(context.bakeLayer(ModelLayers.PLAYER_HEAD));
+        this.playerSkinRenderCache = context.playerSkinRenderCache();
     }
 
     @Override
-    public void render(PlayerRugBlockEntity blockEntity, float partialTick, PoseStack poseStack,
-                       MultiBufferSource buffer, int packedLight, int packedOverlay) {
-        BlockState blockstate = blockEntity.getBlockState();
-        boolean flag = blockstate.getBlock() instanceof PlayerRugBlock;
-        Direction direction = flag ? blockstate.getValue(PlayerRugBlock.FACING) : Direction.UP;
-        ResolvableProfile resolvableProfile = blockEntity.getPlayerProfile();
-        if (resolvableProfile != null) {
-            SkinManager skinmanager = Minecraft.getInstance().getSkinManager();
-            if (isSlim != skinmanager.getInsecureSkin(resolvableProfile.gameProfile()).model().id().equals("slim"))
-                isSlim = !isSlim;
-        }
-        boolean standing = blockstate.getValue(PlayerRugBlock.STANDING);
-
-        renderRug(direction, resolvableProfile, this.isSlim, standing, poseStack, buffer, packedLight, this.headModel);
+    public PlayerRugRenderState createRenderState() {
+        return new PlayerRugRenderState();
     }
 
-    public static void renderRug(Direction direction, @Nullable ResolvableProfile resolvableProfile, boolean slim, boolean standing,
-                          PoseStack poseStack, MultiBufferSource bufferSource, int combinedLight, SkullModel model) {
+    @Override
+    public void extractRenderState(PlayerRugBlockEntity blockEntity, PlayerRugRenderState renderState, float partialTick, Vec3 cameraPosition, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+        BlockEntityRenderer.super.extractRenderState(blockEntity, renderState, partialTick, cameraPosition, breakProgress);
+        renderState.profile = blockEntity.getPlayerProfile();
+
+        if (renderState.profile != null) {
+            SkinManager skinmanager = Minecraft.getInstance().getSkinManager();
+            Supplier<PlayerSkin> skinSupplier = skinmanager.createLookup(renderState.profile.partialProfile(), false);
+            renderState.skin = playerSkinRenderCache.getOrDefault(renderState.profile).playerSkin();
+            renderState.isSlim = skinSupplier.get().model().getSerializedName().equals("slim");
+            renderState.renderType = getRenderType(renderState.profile);
+            renderState.standing = blockEntity.isStanding();
+        }
+    }
+
+    @Override
+    public void submit(PlayerRugRenderState renderState, PoseStack poseStack,
+                       SubmitNodeCollector nodeCollector, CameraRenderState cameraRenderState) {
+        final boolean flag = renderState.blockState.getBlock() instanceof PlayerRugBlock;
+        final Direction direction = flag ? renderState.blockState.getValue(PlayerRugBlock.FACING) : Direction.UP;
+        final RenderType renderType = renderState.renderType;
+        final boolean standing = renderState.standing;
+
+        poseStack.pushPose();
+
+        renderRug(nodeCollector, direction, renderType, renderState.isSlim,
+                standing, poseStack, renderState.lightCoords, headModel, 0, renderState.breakProgress);
+
+        poseStack.popPose();
+    }
+
+    public static void renderRug(SubmitNodeCollector nodeCollector, Direction direction, RenderType renderType,
+                                 boolean slim, boolean standing,
+                                 PoseStack poseStack, int combinedLight, SkullModel skullModel,
+                                 int outlineColor, ModelFeatureRenderer.@Nullable CrumblingOverlay breakProgress) {
+        poseStack.pushPose();
         poseStack.translate(0.5f, 0.001d, 0.5f);
+
         // Render head
         poseStack.pushPose();
-//		RenderSystem.enableRescaleNormal();
 
         poseStack.translate(0, (standing ? 0.4999f : 0f), 0);
 
@@ -66,13 +96,15 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
         poseStack.translate(0, -0.001, standing ? 8f / 16f : -9f / 16f);
         poseStack.scale(-1.0F, -1.0F, 1.0F);
 
-        RenderType headType = getRenderType(resolvableProfile);
-        VertexConsumer buffer = bufferSource.getBuffer(headType);
-        model.renderToBuffer(poseStack, buffer, combinedLight, OverlayTexture.NO_OVERLAY, -1);
 
-//		RenderSystem.disableRescaleNormal();
+        SkullModelBase.State skullmodelbase$state = new SkullModelBase.State();
+        skullmodelbase$state.yRot = 0;
+
+        nodeCollector.submitModel(skullModel, skullmodelbase$state, poseStack, renderType, combinedLight, OverlayTexture.NO_OVERLAY, outlineColor, breakProgress);
+
         poseStack.popPose();
 
+        // Render body
         poseStack.pushPose();
         poseStack.mulPose(Axis.YP.rotationDegrees(angle));
 
@@ -81,109 +113,99 @@ public class PlayerRugBER implements BlockEntityRenderer<PlayerRugBlockEntity> {
             poseStack.translate(0f, 7f / 16f, -1f / 16f);
         }
 
-        if (bufferSource instanceof MultiBufferSource.BufferSource bufferSource1) {
-            bufferSource1.endBatch(headType);
-        }
+        nodeCollector.submitCustomGeometry(poseStack, renderType, (pose, builder) -> {
+            float texHeight = 64;
+            float texWidth = 64;
+            float xOffset = 4f / 16f - 0.5f;
+            float zOffset = 5f / 16f - 0.5f;
+            float thickness = 1f / 16f;
+            float yOffset = 1f / 16f;
 
-        RenderType rugType = PRRenderType.playerRug(getSkinLocation(resolvableProfile));
-        VertexConsumer builder = bufferSource.getBuffer(rugType);
+            // Left Arm
+            if (standing) {
+                xOffset = -0.5f;
+                zOffset = 1f / 16f - 0.5f;
+                buildBodyPart(builder, pose,
+                        xOffset + (slim ? 1f / 16f : 0f), yOffset, zOffset,
+                        (slim ? 3f : 4f) / 16f, thickness, 12f / 16f,
+                        (slim ? 39f : 40f) / texWidth, 52f / texHeight, 36f / texWidth, 64f / texHeight,
+                        texWidth, texHeight, combinedLight);
+            } else {
+                buildBodyPart(builder, pose,
+                        xOffset, yOffset, zOffset - (slim ? 1f / 16f : 0f),
+                        -12f / 16f, thickness, -(slim ? 3f : 4f) / 16f,
+                        (slim ? 46f : 48f) / texWidth, 52f / texHeight, (slim ? 43f : 44f) / texWidth, 64f / texHeight,
+                        texWidth, texHeight, combinedLight);
+            }
 
-        float texHeight = 64;
-        float texWidth = 64;
-        float xOffset = 4f / 16f - 0.5f;
-        float zOffset = 5f / 16f - 0.5f;
-        float thickness = 1f / 16f;
-        float yOffset = 1f / 16f;
-
-        // Left Arm
-        if (standing) {
-            xOffset = -0.5f;
+            // Right Arm
+            xOffset = 12f / 16f - 0.5f;
             zOffset = 1f / 16f - 0.5f;
-            buildBodyPart(builder, poseStack,
-                    xOffset + (slim ? 1f / 16f : 0f), yOffset, zOffset,
-                    (slim ? 3f : 4f) / 16f, thickness, 12f / 16f,
-                    (slim ? 39f : 40f) / texWidth, 52f / texHeight, 36f / texWidth, 64f / texHeight,
-                    texWidth, texHeight, combinedLight);
-        } else {
-            buildBodyPart(builder, poseStack,
-                    xOffset, yOffset, zOffset - (slim ? 1f / 16f : 0f),
-                    -12f / 16f, thickness, -(slim ? 3f : 4f) / 16f,
-                    (slim ? 46f : 48f) / texWidth, 52f / texHeight, (slim ? 43f : 44f) / texWidth, 64f / texHeight,
-                    texWidth, texHeight, combinedLight);
-        }
+            if (standing) {
+                buildBodyPart(builder, pose,
+                        xOffset, yOffset, zOffset,
+                        (slim ? 3f : 4f) / 16f, thickness, 12f / 16f,
+                        (slim ? 47f : 48f) / texWidth, 20f / texHeight, 44f / texWidth, 32f / texHeight,
+                        texWidth, texHeight, combinedLight);
+            } else {
+                buildBodyPart(builder, pose,
+                        xOffset, yOffset, zOffset,
+                        12f / 16f, thickness, (slim ? 3f : 4f) / 16f,
+                        (slim ? 54f : 56f) / texWidth, 20f / texHeight, (slim ? 51f : 52f) / texWidth, 32f / texHeight,
+                        texWidth, texHeight, combinedLight);
+            }
 
-        // Right Arm
-        xOffset = 12f / 16f - 0.5f;
-        zOffset = 1f / 16f - 0.5f;
-        if (standing) {
-            buildBodyPart(builder, poseStack,
+            // Body
+            xOffset = 0.25f - 0.5f;
+            zOffset = 1f / 16f - 0.5f;
+            buildBodyPart(builder, pose,
                     xOffset, yOffset, zOffset,
-                    (slim ? 3f : 4f) / 16f, thickness, 12f / 16f,
-                    (slim ? 47f : 48f) / texWidth, 20f / texHeight, 44f / texWidth, 32f / texHeight,
+                    8f / 16f, thickness, 12f / 16f,
+                    (standing ? 28f : 32f) / texWidth, 20f / texHeight, (standing ? 20f : 40f) / texWidth, 32f / texHeight,
                     texWidth, texHeight, combinedLight);
-        } else {
-            buildBodyPart(builder, poseStack,
+
+            // Left Leg
+            xOffset = 0.25f - 0.5f;
+            zOffset = 13f / 16f - 0.5f;
+            buildBodyPart(builder, pose,
                     xOffset, yOffset, zOffset,
-                    12f / 16f, thickness, (slim ? 3f : 4f) / 16f,
-                    (slim ? 54f : 56f) / texWidth, 20f / texHeight, (slim ? 51f : 52f) / texWidth, 32f / texHeight,
+                    4f / 16f, thickness, 12f / 16f,
+                    (standing ? 20f : 28f) / texWidth, 52f / texHeight, (standing ? 24f : 32f) / texWidth, 64f / texHeight,
                     texWidth, texHeight, combinedLight);
-        }
 
-        // Body
-        xOffset = 0.25f - 0.5f;
-        zOffset = 1f / 16f - 0.5f;
-        buildBodyPart(builder, poseStack,
-                xOffset, yOffset, zOffset,
-                8f / 16f, thickness, 12f / 16f,
-                (standing ? 28f : 32f) / texWidth, 20f / texHeight, (standing ? 20f : 40f) / texWidth, 32f / texHeight,
-                texWidth, texHeight, combinedLight);
+            // Right Leg
+            xOffset = 0.0f;
+            zOffset = 13f / 16f - 0.5f;
+            buildBodyPart(builder, pose,
+                    xOffset, yOffset, zOffset,
+                    4f / 16f, thickness, 12f / 16f,
+                    (standing ? 4f : 12f) / texWidth, 20f / texHeight, (standing ? 8f : 16f) / texWidth, 32f / texHeight,
+                    texWidth, texHeight, combinedLight);
+        });
 
-        // Left Leg
-        xOffset = 0.25f - 0.5f;
-        zOffset = 13f / 16f - 0.5f;
-        buildBodyPart(builder, poseStack,
-                xOffset, yOffset, zOffset,
-                4f / 16f, thickness, 12f / 16f,
-                (standing ? 20f : 28f) / texWidth, 52f / texHeight, (standing ? 24f : 32f) / texWidth, 64f / texHeight,
-                texWidth, texHeight, combinedLight);
-
-        // Right Leg
-        xOffset = 0.0f;
-        zOffset = 13f / 16f - 0.5f;
-        buildBodyPart(builder, poseStack,
-                xOffset, yOffset, zOffset,
-                4f / 16f, thickness, 12f / 16f,
-                (standing ? 4f : 12f) / texWidth, 20f / texHeight, (standing ? 8f : 16f) / texWidth, 32f / texHeight,
-                texWidth, texHeight, combinedLight);
-
-        if (bufferSource instanceof MultiBufferSource.BufferSource bufferSource1) {
-            bufferSource1.endBatch(rugType);
-        }
+        poseStack.popPose();
 
         poseStack.popPose();
     }
 
-    public static RenderType getRenderType(@Nullable ResolvableProfile resolvableProfile) {
-        return RenderType.entityTranslucent(getSkinLocation(resolvableProfile));
+    public RenderType getRenderType(@Nullable ResolvableProfile resolvableProfile) {
+        if (resolvableProfile == null)
+            return RenderTypes.entityTranslucent(defaultTexture);
+
+        return playerSkinRenderCache.getOrDefault(resolvableProfile).renderType();
     }
 
-    public static ResourceLocation getSkinLocation(@Nullable ResolvableProfile resolvableProfile) {
-        if (resolvableProfile == null) {
-            return defaultTexture;
-        } else {
-            SkinManager skinmanager = Minecraft.getInstance().getSkinManager();
-            return skinmanager.getInsecureSkin(resolvableProfile.gameProfile()).texture();
-        }
+    private static Vec3i directionToNormal(Direction direction) {
+        return new Vec3i(direction.getStepX(), direction.getStepY(), direction.getStepZ());
     }
 
-    public static void buildBodyPart(VertexConsumer builder, PoseStack poseStack, float xPos, float yPos, float zPos, float width, float depth, float length, float minU, float minV, float maxU, float maxV, float texWidth, float texHeight, int combinedLight) {
-        PoseStack.Pose pose = poseStack.last();
-        Vec3i downVec = Direction.DOWN.getNormal();
-        Vec3i upVec = Direction.UP.getNormal();
-        Vec3i northVec = Direction.NORTH.getNormal();
-        Vec3i southVec = Direction.SOUTH.getNormal();
-        Vec3i westVec = Direction.WEST.getNormal();
-        Vec3i eastVec = Direction.EAST.getNormal();
+    public static void buildBodyPart(VertexConsumer builder, PoseStack.Pose pose, float xPos, float yPos, float zPos, float width, float depth, float length, float minU, float minV, float maxU, float maxV, float texWidth, float texHeight, int combinedLight) {
+        Vec3i downVec = directionToNormal(Direction.DOWN);
+        Vec3i upVec = directionToNormal(Direction.UP);
+        Vec3i northVec = directionToNormal(Direction.NORTH);
+        Vec3i southVec = directionToNormal(Direction.SOUTH);
+        Vec3i westVec = directionToNormal(Direction.WEST);
+        Vec3i eastVec = directionToNormal(Direction.EAST);
 
         float texDepth = depth * 16f;
         // This if is used if texture should be rotated as width would be longer then length (used for arms)

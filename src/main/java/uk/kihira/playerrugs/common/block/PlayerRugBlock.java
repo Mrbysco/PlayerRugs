@@ -18,11 +18,9 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.block.state.StateDefinition.Builder;
 import net.minecraft.world.level.block.state.properties.BlockStateProperties;
 import net.minecraft.world.level.block.state.properties.BooleanProperty;
-import net.minecraft.world.level.block.state.properties.DirectionProperty;
-import net.minecraft.world.phys.HitResult;
+import net.minecraft.world.level.block.state.properties.EnumProperty;
 import net.minecraft.world.phys.shapes.CollisionContext;
 import net.minecraft.world.phys.shapes.VoxelShape;
-import uk.kihira.playerrugs.common.RugRegistry;
 import uk.kihira.playerrugs.common.blockentity.PlayerRugBlockEntity;
 
 import javax.annotation.Nullable;
@@ -30,7 +28,7 @@ import javax.annotation.Nullable;
 public class PlayerRugBlock extends BaseEntityBlock {
     public static final MapCodec<PlayerRugBlock> CODEC = simpleCodec(PlayerRugBlock::new);
 
-    public static final DirectionProperty FACING = BlockStateProperties.HORIZONTAL_FACING;
+    public static final EnumProperty<Direction> FACING = BlockStateProperties.HORIZONTAL_FACING;
     public static final BooleanProperty STANDING = BooleanProperty.create("standing");
 
     private static final VoxelShape STANDING_EAST = Block.box(0, 0, 4, 1, 16, 12);
@@ -41,7 +39,7 @@ public class PlayerRugBlock extends BaseEntityBlock {
     private static final VoxelShape FACING_EAST_WEST = Block.box(1, 0, 4, 16, 1, 12);
 
     public PlayerRugBlock(Properties builder) {
-        super(builder.noCollission().isViewBlocking(PlayerRugBlock::never));
+        super(builder.noCollision().isViewBlocking(PlayerRugBlock::never));
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH).setValue(STANDING, Boolean.FALSE));
     }
 
@@ -80,11 +78,12 @@ public class PlayerRugBlock extends BaseEntityBlock {
     }
 
     @Override
-    public ItemStack getCloneItemStack(BlockState state, HitResult target, LevelReader level, BlockPos pos, Player player) {
-        ItemStack itemstack = super.getCloneItemStack(level, pos, state);
-        level.getBlockEntity(pos, RugRegistry.PLAYER_RUG_BLOCK_ENTITY.get()).ifPresent(blockEntity ->
-                blockEntity.saveToItem(itemstack, level.registryAccess()));
-        return itemstack;
+    public ItemStack getCloneItemStack(LevelReader level, BlockPos pos, BlockState state, boolean includeData, Player player) {
+        ItemStack stack = super.getCloneItemStack(level, pos, state, includeData, player);
+        if (level.getBlockEntity(pos) instanceof PlayerRugBlockEntity playerRugBlockEntity) {
+            playerRugBlockEntity.saveToItem(stack, level.registryAccess());
+        }
+        return stack;
     }
 
     @Nullable

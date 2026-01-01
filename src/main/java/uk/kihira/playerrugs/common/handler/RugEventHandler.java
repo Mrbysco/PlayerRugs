@@ -1,20 +1,18 @@
 package uk.kihira.playerrugs.common.handler;
 
 
-import com.mojang.authlib.GameProfile;
 import net.minecraft.core.component.DataComponents;
-import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.players.GameProfileCache;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.Container;
 import net.minecraft.world.damagesource.DamageTypes;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.block.Block;
 import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
-import net.neoforged.neoforge.event.entity.player.AnvilRepairEvent;
 import net.neoforged.neoforge.event.entity.player.PlayerEvent.ItemCraftedEvent;
 import uk.kihira.playerrugs.common.block.PlayerRugBlock;
 import uk.kihira.playerrugs.common.config.RugConfig;
@@ -30,19 +28,21 @@ public class RugEventHandler {
         }
     }
 
-    @SubscribeEvent
-    public void onAnvilRepair(AnvilRepairEvent event) {
-        ItemStack stack = event.getOutput();
-        Player player = event.getEntity();
+    /**
+     * Called to update the anvil result when easy crafting is enabled
+     * @param outputStack The output stack from the anvil
+     * @param player The player taking the result
+     */
+    public static void updateAnvilResult(ItemStack outputStack, Player player) {
         if (RugConfig.SERVER.easyCrafting.get() &&
-                Block.byItem(stack.getItem()) instanceof PlayerRugBlock &&
-                stack.has(DataComponents.CUSTOM_NAME) && !player.level().isClientSide) {
-            final MinecraftServer server = player.getServer();
-            String stackName = stack.getDisplayName().getString();
-            if (server != null && !stackName.contains(" ") && player.getServer() != null) {
-                GameProfileCache profileCache = server.getProfileCache();
-                GameProfile profile = !stackName.isEmpty() && profileCache != null ? profileCache.get(stackName).orElse(player.getGameProfile()) : player.getGameProfile();
-                ProfileHelper.addGameProfileToStack(stack, profile);
+                Block.byItem(outputStack.getItem()) instanceof PlayerRugBlock &&
+                outputStack.has(DataComponents.CUSTOM_NAME) && !player.level().isClientSide()) {
+            Component customName = outputStack.getCustomName();
+            if (customName != null) {
+                String stackName = customName.getString();
+                if (stackName.isBlank() && stackName.contains(" ")) return;
+                ResolvableProfile profile = ResolvableProfile.createUnresolved(stackName);
+                outputStack.set(DataComponents.PROFILE, profile);
             }
         }
     }

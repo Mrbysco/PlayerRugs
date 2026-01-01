@@ -1,50 +1,31 @@
 package uk.kihira.playerrugs.common.blockentity;
 
-import com.google.common.cache.CacheBuilder;
-import com.google.common.cache.CacheLoader;
-import com.google.common.cache.LoadingCache;
-import com.mojang.authlib.GameProfile;
-import com.mojang.authlib.yggdrasil.ProfileResult;
-import net.minecraft.Util;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.Connection;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
-import net.minecraft.server.Services;
-import net.minecraft.util.StringUtil;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ResolvableProfile;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.TagValueOutput;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import org.jetbrains.annotations.Nullable;
 import uk.kihira.playerrugs.PlayerRugs;
 import uk.kihira.playerrugs.common.RugRegistry;
+import uk.kihira.playerrugs.common.block.PlayerRugBlock;
 
-import java.time.Duration;
 import java.util.Optional;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executor;
-import java.util.function.BooleanSupplier;
 
 public class PlayerRugBlockEntity extends BlockEntity {
-    @Nullable
-    private static Executor mainThreadExecutor;
-    @Nullable
-    private static LoadingCache<String, CompletableFuture<Optional<GameProfile>>> profileCacheByName;
-    @Nullable
-    private static LoadingCache<UUID, CompletableFuture<Optional<GameProfile>>> profileCacheById;
-    public static final Executor CHECKED_MAIN_THREAD_EXECUTOR = runnable -> {
-        Executor executor = mainThreadExecutor;
-        if (executor != null) {
-            executor.execute(runnable);
-        }
-    };
-
     @Nullable
     private ResolvableProfile playerProfile;
 
@@ -52,82 +33,26 @@ public class PlayerRugBlockEntity extends BlockEntity {
         super(RugRegistry.PLAYER_RUG_BLOCK_ENTITY.get(), pos, state);
     }
 
-    public static void setup(final Services services, Executor p_mainThreadExecutor) {
-        mainThreadExecutor = p_mainThreadExecutor;
-        final BooleanSupplier booleansupplier = () -> profileCacheById == null;
-        profileCacheByName = CacheBuilder.newBuilder()
-                .expireAfterAccess(Duration.ofMinutes(10L))
-                .maximumSize(256L)
-                .build(new CacheLoader<String, CompletableFuture<Optional<GameProfile>>>() {
-                    public CompletableFuture<Optional<GameProfile>> load(String username) {
-                        return PlayerRugBlockEntity.fetchProfileByName(username, services);
-                    }
-                });
-        profileCacheById = CacheBuilder.newBuilder()
-                .expireAfterAccess(Duration.ofMinutes(10L))
-                .maximumSize(256L)
-                .build(new CacheLoader<UUID, CompletableFuture<Optional<GameProfile>>>() {
-                    public CompletableFuture<Optional<GameProfile>> load(UUID id) {
-                        return PlayerRugBlockEntity.fetchProfileById(id, services, booleansupplier);
-                    }
-                });
-    }
+    @Override
+    public void loadAdditional(ValueInput input) {
+	    super.loadAdditional(input);
 
-    static CompletableFuture<Optional<GameProfile>> fetchProfileByName(String name, Services services) {
-        return services.profileCache()
-                .getAsync(name)
-                .thenCompose(
-                        optionalProfile -> {
-                            LoadingCache<UUID, CompletableFuture<Optional<GameProfile>>> loadingcache = profileCacheById;
-                            return loadingcache != null && !optionalProfile.isEmpty()
-                                    ? loadingcache.getUnchecked(optionalProfile.get().getId())
-                                    .thenApply(profile -> profile.or(() -> optionalProfile))
-                                    : CompletableFuture.completedFuture(Optional.empty());
-                        }
-                );
-    }
-
-    static CompletableFuture<Optional<GameProfile>> fetchProfileById(UUID id, Services services, BooleanSupplier cacheUninitialized) {
-        return CompletableFuture.supplyAsync(() -> {
-            if (cacheUninitialized.getAsBoolean()) {
-                return Optional.empty();
-            } else {
-                ProfileResult profileresult = services.sessionService().fetchProfile(id, true);
-                return Optional.ofNullable(profileresult).map(ProfileResult::profile);
-            }
-        }, Util.backgroundExecutor());
-    }
-
-    public static void clear() {
-        mainThreadExecutor = null;
-        profileCacheByName = null;
-        profileCacheById = null;
+	    Optional<ResolvableProfile> optionalProfile = input.read("profile", ResolvableProfile.CODEC);
+	    optionalProfile.ifPresent(this::setPlayerProfile);
     }
 
     @Override
-    public void loadAdditional(CompoundTag compound, HolderLookup.Provider lookupProvider) {
-        super.loadAdditional(compound, lookupProvider);
-
-        if (compound.contains("profile")) {
-            ResolvableProfile.CODEC
-                    .parse(NbtOps.INSTANCE, compound.get("profile"))
-                    .resultOrPartial(error -> PlayerRugs.LOGGER.error("Failed to load profile from player rug: {}", error))
-                    .ifPresent(this::setPlayerProfile);
-        }
-    }
-
-    @Override
-    public void saveAdditional(CompoundTag compound, HolderLookup.Provider lookupProvider) {
-        super.saveAdditional(compound, lookupProvider);
+    public void saveAdditional(ValueOutput output) {
+	    super.saveAdditional(output);
         if (this.playerProfile != null) {
-            compound.put("profile", ResolvableProfile.CODEC.encodeStart(NbtOps.INSTANCE, this.playerProfile).getOrThrow());
+	        output.store("profile", ResolvableProfile.CODEC, this.playerProfile);
         }
     }
 
     @Override
-    protected void applyImplicitComponents(BlockEntity.DataComponentInput input) {
-        super.applyImplicitComponents(input);
-        this.setPlayerProfile(input.get(DataComponents.PROFILE));
+    protected void applyImplicitComponents(DataComponentGetter getter) {
+	    super.applyImplicitComponents(getter);
+        this.setPlayerProfile(getter.get(DataComponents.PROFILE));
     }
 
     @Override
@@ -137,35 +62,38 @@ public class PlayerRugBlockEntity extends BlockEntity {
     }
 
     @Override
-    public void removeComponentsFromTag(CompoundTag tag) {
-        super.removeComponentsFromTag(tag);
-        tag.remove("profile");
+    public void removeComponentsFromTag(ValueOutput output) {
+	    super.removeComponentsFromTag(output);
+	    output.discard("profile");
     }
 
-    @Override
-    public void onDataPacket(Connection net, ClientboundBlockEntityDataPacket pkt, HolderLookup.Provider lookupProvider) {
-        CompoundTag compoundNBT = pkt.getTag();
-        handleUpdateTag(compoundNBT, lookupProvider);
-    }
+	@Override
+	public void onDataPacket(Connection net, ValueInput valueInput) {
+		super.onDataPacket(net, valueInput);
+	}
 
-    @Override
-    public void handleUpdateTag(CompoundTag tag, HolderLookup.Provider lookupProvider) {
-        super.handleUpdateTag(tag, lookupProvider);
-    }
+	@Override
+	public CompoundTag getUpdateTag(HolderLookup.Provider lookupProvider) {
+		CompoundTag tag = new CompoundTag();
+		try (ProblemReporter.ScopedCollector problemreporter$scopedcollector = new ProblemReporter.ScopedCollector(PlayerRugs.LOGGER)) {
+			TagValueOutput output = TagValueOutput.createWithContext(problemreporter$scopedcollector, lookupProvider);
+			this.saveAdditional(output);
+			tag.merge(output.buildResult());
+		}
+		return tag;
+	}
 
-    @Override
-    public CompoundTag getUpdateTag(HolderLookup.Provider lookupProvider) {
-        CompoundTag nbt = new CompoundTag();
-        this.saveAdditional(nbt, lookupProvider);
-        return nbt;
-    }
-
-    @Override
-    public CompoundTag getPersistentData() {
-        CompoundTag nbt = new CompoundTag();
-        this.saveAdditional(nbt, level != null ? level.registryAccess() : VanillaRegistries.createLookup());
-        return nbt;
-    }
+	@Override
+	public CompoundTag getPersistentData() {
+		CompoundTag tag = new CompoundTag();
+		try (ProblemReporter.ScopedCollector problemreporter$scopedcollector = new ProblemReporter.ScopedCollector(PlayerRugs.LOGGER)) {
+			HolderLookup.Provider lookupProvider = this.level != null ? this.level.registryAccess() : VanillaRegistries.createLookup();
+			TagValueOutput output = TagValueOutput.createWithContext(problemreporter$scopedcollector, lookupProvider);
+			this.saveAdditional(output);
+			tag.merge(output.buildResult());
+		}
+		return tag;
+	}
 
     @Nullable
     @Override
@@ -173,10 +101,16 @@ public class PlayerRugBlockEntity extends BlockEntity {
         return ClientboundBlockEntityDataPacket.create(this);
     }
 
-//    @Override
-//    public AABB getRenderBoundingBox() {
-//        return new AABB(getBlockPos().offset(-1, -1, -1), getBlockPos().offset(1, 1, 1));
-//    }
+    public void saveToItem(ItemStack stack, HolderLookup.Provider registries) {
+        try (ProblemReporter.ScopedCollector problemreporter$scopedcollector = new ProblemReporter.ScopedCollector(PlayerRugs.LOGGER)) {
+            TagValueOutput output = TagValueOutput.createWithContext(problemreporter$scopedcollector, registries);
+            saveCustomOnly(output);
+            removeComponentsFromTag(output);
+
+            BlockItem.setBlockEntityData(stack, this.getType(), output);
+            stack.applyComponents(this.collectComponents());
+        }
+    }
 
     /**
      * GameProfile stuff. It's safer to do it than to call the Skull BlockEntity. (Tends to crash from experience)
@@ -188,47 +122,10 @@ public class PlayerRugBlockEntity extends BlockEntity {
     }
 
     public void setPlayerProfile(@Nullable ResolvableProfile profile) {
-        synchronized (this) {
-            this.playerProfile = profile;
-        }
-
-        this.updateOwnerProfile();
+        this.playerProfile = profile;
     }
 
-    private void updateOwnerProfile() {
-        if (this.playerProfile != null && !this.playerProfile.isResolved()) {
-            resolve(this.playerProfile).thenAcceptAsync(profile -> {
-                this.playerProfile = profile;
-                this.setChanged();
-            }, CHECKED_MAIN_THREAD_EXECUTOR);
-        } else {
-            this.setChanged();
-        }
-    }
-
-    public static CompletableFuture<Optional<GameProfile>> fetchGameProfile(String profileName) {
-        LoadingCache<String, CompletableFuture<Optional<GameProfile>>> loadingcache = profileCacheByName;
-        return loadingcache != null && StringUtil.isValidPlayerName(profileName)
-                ? loadingcache.getUnchecked(profileName)
-                : CompletableFuture.completedFuture(Optional.empty());
-    }
-
-    public static CompletableFuture<Optional<GameProfile>> fetchGameProfile(UUID profileUuid) {
-        LoadingCache<UUID, CompletableFuture<Optional<GameProfile>>> loadingcache = profileCacheById;
-        return loadingcache != null ? loadingcache.getUnchecked(profileUuid) : CompletableFuture.completedFuture(Optional.empty());
-    }
-
-    public static CompletableFuture<ResolvableProfile> resolve(ResolvableProfile resolvableProfile) {
-        if (resolvableProfile.isResolved()) {
-            return CompletableFuture.completedFuture(resolvableProfile);
-        } else {
-            return resolvableProfile.id().isPresent() ? fetchGameProfile(resolvableProfile.id().get()).thenApply(profile -> {
-                GameProfile gameprofile = profile.orElseGet(() -> new GameProfile(resolvableProfile.id().get(), resolvableProfile.name().orElse("")));
-                return new ResolvableProfile(gameprofile);
-            }) : fetchGameProfile(resolvableProfile.name().orElseThrow()).thenApply(profile -> {
-                GameProfile gameprofile = profile.orElseGet(() -> new GameProfile(Util.NIL_UUID, resolvableProfile.name().get()));
-                return new ResolvableProfile(gameprofile);
-            });
-        }
-    }
+	public boolean isStanding() {
+		return getBlockState().getValue(PlayerRugBlock.STANDING).booleanValue();
+	}
 }

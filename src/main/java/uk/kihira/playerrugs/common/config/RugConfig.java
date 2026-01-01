@@ -1,8 +1,8 @@
 package uk.kihira.playerrugs.common.config;
 
 import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.fml.event.config.ModConfigEvent;
+import net.neoforged.neoforge.common.ModConfigSpec;
 import net.neoforged.neoforge.common.ModConfigSpec.BooleanValue;
 import org.apache.commons.lang3.tuple.Pair;
 import uk.kihira.playerrugs.PlayerRugs;
@@ -13,7 +13,7 @@ public class RugConfig {
 
         Server(ModConfigSpec.Builder builder) {
             builder.comment("Server settings")
-                    .push("Server");
+                    .push("server");
 
             easyCrafting = builder
                     .comment("If true, allows rugs to be renamed in anvils to get that players rug")

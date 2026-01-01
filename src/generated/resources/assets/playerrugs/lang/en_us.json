@@ -1,4 +1,8 @@
 {
   "block.playerrugs.player_rug": "Player Rug",
+  "playerrugs.configuration.easyCrafting": "Easy Crafting",
+  "playerrugs.configuration.easyCrafting.tooltip": "If true, allows rugs to be renamed in anvils to get that players rug.",
+  "playerrugs.configuration.server": "Server",
+  "playerrugs.configuration.server.tooltip": "Server Settings",
   "playerrugs.tooltip": "Player: %s"
 }

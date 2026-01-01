@@ -1,0 +1,9 @@
+{
+  "model": {
+    "type": "minecraft:special",
+    "base": "playerrugs:item/player_rug",
+    "model": {
+      "type": "playerrugs:player_rug"
+    }
+  }
+}
