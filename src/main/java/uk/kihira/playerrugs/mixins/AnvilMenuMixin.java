@@ -13,7 +13,7 @@ import uk.kihira.playerrugs.common.handler.RugEventHandler;
 public class AnvilMenuMixin {
 
     @Inject(method = "onTake(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/item/ItemStack;)V", at = @At(value = "RETURN"))
-    public void playerrugs$onTake(Player player, ItemStack resultStack, CallbackInfo ci) {
-        RugEventHandler.updateAnvilResult(resultStack, player);
+    public void playerrugs$onTake(Player player, ItemStack carried, CallbackInfo ci) {
+        RugEventHandler.updateAnvilResult(carried, player);
     }
 }

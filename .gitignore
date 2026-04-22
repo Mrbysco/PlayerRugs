@@ -20,13 +20,7 @@ build
 # other
 eclipse
 run
-classes
-logs
-*.bak
-*.bbmodel
+runs
+run-data
 
-# Ignore Gradle GUI config
-gradle-app.setting
-
-# Cache of project
-.gradletasknamecache
+repo

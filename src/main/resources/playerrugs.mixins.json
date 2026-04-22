@@ -1,7 +1,7 @@
 {
   "required": true,
   "minVersion": "0.8.5",
-  "compatibilityLevel": "JAVA_21",
+  "compatibilityLevel": "JAVA_25",
   "package": "uk.kihira.playerrugs.mixins",
   "target": "@env(DEFAULT)",
   "mixins": [
